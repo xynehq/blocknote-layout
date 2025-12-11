@@ -1,182 +1,386 @@
+/* =============================================================================
+   CodeRunner — "Terminal Zen" Design System
+   A minimal, mindful, expert-density code execution interface
+   ============================================================================= */
+
 :root {
-  --bn-cr-bg: #09090b;       
-  --bn-cr-border: #27272a;   
-  --bn-cr-accent: #6d28d9;   
-  --bn-cr-accent-hover: #7c3aed;
-  --bn-cr-text: #e4e4e7;     
-  --bn-cr-text-muted: #a1a1aa;
-  --bn-cr-success: #10b981;  
-  --bn-cr-error: #ef4444;    
-  --bn-cr-font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace; 
-  --bn-cr-font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  /* ─── Surface Hierarchy ─── */
+  --cr-bg-void: #08080a;
+  --cr-bg-base: #0c0c0e;
+  --cr-bg-elevated: #111113;
+  --cr-bg-surface: #18181b;
+  
+  /* ─── Border & Divider ─── */
+  --cr-border: #1f1f23;
+  --cr-border-subtle: #16161a;
+  --cr-border-focus: #2d2d33;
+  
+  /* ─── Primary Accent — Warm Amber ─── */
+  --cr-accent: #f59e0b;
+  --cr-accent-muted: rgba(245, 158, 11, 0.15);
+  --cr-accent-glow: rgba(245, 158, 11, 0.08);
+  
+  /* ─── Semantic Status ─── */
+  --cr-success: #22c55e;
+  --cr-success-muted: rgba(34, 197, 94, 0.12);
+  --cr-error: #ef4444;
+  --cr-error-muted: rgba(239, 68, 68, 0.12);
+  --cr-running: #3b82f6;
+  
+  /* ─── Text Hierarchy ─── */
+  --cr-text-primary: #e4e4e7;
+  --cr-text-secondary: #a1a1aa;
+  --cr-text-muted: #52525b;
+  --cr-text-faint: #3f3f46;
+  
+  /* ─── Typography ─── */
+  --cr-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --cr-font-ui: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  
+  /* ─── Spacing Scale (4pt grid) ─── */
+  --cr-space-1: 4px;
+  --cr-space-2: 8px;
+  --cr-space-3: 12px;
+  --cr-space-4: 16px;
+  --cr-space-5: 20px;
+  --cr-space-6: 24px;
+  
+  /* ─── Radius ─── */
+  --cr-radius-sm: 4px;
+  --cr-radius-md: 6px;
+  --cr-radius-lg: 8px;
 }
 
+/* =============================================================================
+   Block Container
+   ============================================================================= */
+
 .bn-code-runner-block {
-  font-family: var(--bn-cr-font-ui);
-  background-color: var(--bn-cr-bg);
-  border: 1px solid var(--bn-cr-border);
-  border-radius: 8px; 
-  margin: 1.5rem 0;
-  width: 100%; 
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  font-family: var(--cr-font-ui);
+  background: var(--cr-bg-base);
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius-lg);
+  margin: 1rem 0;
+  width: 100%;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  
+  /* Subtle inner shadow for depth */
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.02),
+    0 2px 8px -2px rgba(0, 0, 0, 0.4);
 }
 
 .bn-code-runner-block:hover {
-  border-color: #3f3f46;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: var(--cr-border-focus);
+}
+
+.bn-code-runner-block:focus-within {
+  border-color: var(--cr-accent);
+  box-shadow: 
+    0 0 0 1px var(--cr-accent-glow),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.02),
+    0 4px 12px -2px rgba(0, 0, 0, 0.5);
 }
 
 .bn-code-runner-block--readonly {
   border-style: dashed;
+  border-color: var(--cr-border-subtle);
+  background: var(--cr-bg-void);
 }
-  
+
+/* =============================================================================
+   Header — Minimal Chrome
+   ============================================================================= */
+
 .bn-code-runner-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--bn-cr-border);
-  background: rgba(255, 255, 255, 0.02);
+  padding: var(--cr-space-2) var(--cr-space-3);
+  background: var(--cr-bg-elevated);
+  border-bottom: 1px solid var(--cr-border-subtle);
+  min-height: 36px;
 }
 
 .bn-code-runner-header__left {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  gap: var(--cr-space-2);
 }
 
-.bn-code-runner-lang-badge {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--bn-cr-text-muted);
-    background: transparent;
-    padding: 0;
+/* ─── Language Selector — Minimal Pill ─── */
+
+.bn-code-runner-lang-select {
+  appearance: none;
+  background: var(--cr-bg-surface);
+  border: 1px solid var(--cr-border);
+  border-radius: var(--cr-radius-sm);
+  color: var(--cr-text-secondary);
+  font-family: var(--cr-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 20px 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  /* Custom dropdown arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px;
 }
+
+.bn-code-runner-lang-select:hover {
+  border-color: var(--cr-border-focus);
+  color: var(--cr-text-primary);
+}
+
+.bn-code-runner-lang-select:focus {
+  outline: none;
+  border-color: var(--cr-accent);
+  box-shadow: 0 0 0 2px var(--cr-accent-muted);
+}
+
+.bn-code-runner-lang-select option {
+  background: var(--cr-bg-surface);
+  color: var(--cr-text-primary);
+  padding: var(--cr-space-2);
+}
+
+/* =============================================================================
+   Toolbar — Icon-driven, Minimal
+   ============================================================================= */
 
 .bn-code-runner-toolbar {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .bn-code-runner-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   background: transparent;
   border: none;
-  color: var(--bn-cr-text-muted);
-  font-size: 11px;
-  font-family: var(--bn-cr-font-ui);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: var(--cr-radius-sm);
+  color: var(--cr-text-muted);
+  font-family: var(--cr-font-ui);
+  font-size: 10px;
   font-weight: 500;
-  display: flex;
-  align-items: center;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
 }
 
 .bn-code-runner-btn:hover {
-  color: var(--bn-cr-text);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--cr-text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bn-code-runner-btn:active {
+  transform: scale(0.97);
 }
 
 .bn-code-runner-btn.active {
-    color: var(--bn-cr-accent);
-    background: rgba(109, 40, 217, 0.1);
+  color: var(--cr-accent);
+  background: var(--cr-accent-muted);
 }
+
+.bn-code-runner-btn svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* ─── Separator ─── */
 
 .bn-code-runner-separator {
-    width: 1px;
-    height: 12px;
-    background: var(--bn-cr-border);
-    margin: 0 6px;
+  width: 1px;
+  height: 14px;
+  background: var(--cr-border);
+  margin: 0 var(--cr-space-2);
+  opacity: 0.5;
 }
 
+/* ─── Run Button — Primary Action ─── */
+
 .bn-code-runner-btn--run {
-  color: var(--bn-cr-success);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: var(--cr-success-muted);
+  color: var(--cr-success);
+  border: 1px solid transparent;
+  padding: 5px 10px;
+  font-weight: 600;
 }
 
 .bn-code-runner-btn--run:hover:not(:disabled) {
-  background: var(--bn-cr-success);
-  color: #000;
-  border-color: var(--bn-cr-success);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+  background: var(--cr-success);
+  color: var(--cr-bg-void);
+  box-shadow: 0 0 12px var(--cr-success-muted);
 }
 
-.bn-code-runner-btn--run:disabled {
+.bn-code-runner-btn--run:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.bn-code-runner-btn--run:disabled,
+.bn-code-runner-btn--run.running {
   opacity: 0.7;
   cursor: wait;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--cr-running);
 }
 
+/* =============================================================================
+   Code Editor Content
+   ============================================================================= */
+
+.bn-code-runner-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.bn-code-runner-editor {
+  position: relative;
+}
+
+/* ─── CodeMirror Overrides ─── */
+
 .bn-code-runner-editor .cm-editor {
-    background-color: transparent !important;
+  background: transparent !important;
+  font-size: 13px;
+}
+
+.bn-code-runner-editor .cm-focused {
+  outline: none !important;
 }
 
 .bn-code-runner-editor .cm-scroller {
-    font-family: var(--bn-cr-font-mono) !important;
-    font-size: 13px;
-    line-height: 1.6;
-    padding: 8px 0;
+  font-family: var(--cr-font-mono) !important;
+  line-height: 1.65;
+  padding: var(--cr-space-3) 0;
 }
 
 .bn-code-runner-editor .cm-gutters {
-    background: transparent !important;
-    border-right: none !important;
-    color: #52525b !important; 
+  background: transparent !important;
+  border-right: none !important;
+  padding-right: var(--cr-space-2);
 }
 
 .bn-code-runner-editor .cm-gutterElement {
-    padding-right: 12px !important;
+  color: var(--cr-text-faint) !important;
+  font-size: 11px;
+  padding: 0 var(--cr-space-3) 0 var(--cr-space-3) !important;
+  min-width: 32px;
+  text-align: right;
+}
+
+.bn-code-runner-editor .cm-activeLineGutter {
+  color: var(--cr-text-muted) !important;
+  background: transparent !important;
+}
+
+.bn-code-runner-editor .cm-activeLine {
+  background: rgba(255, 255, 255, 0.02) !important;
 }
 
 .bn-code-runner-editor .cm-content {
-    caret-color: var(--bn-cr-accent) !important;
+  padding: 0 var(--cr-space-4) 0 0;
+  caret-color: var(--cr-accent) !important;
 }
 
+.bn-code-runner-editor .cm-cursor {
+  border-left-color: var(--cr-accent) !important;
+  border-left-width: 2px !important;
+}
+
+.bn-code-runner-editor .cm-selectionBackground {
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.bn-code-runner-editor .cm-line {
+  padding: 0 var(--cr-space-2);
+}
+
+/* =============================================================================
+   Output Panel — Clean Terminal Aesthetic
+   ============================================================================= */
+
 .bn-code-runner-output {
-  border-top: 1px solid var(--bn-cr-border);
-  background: #000; 
-  padding: 0;
+  border-top: 1px solid var(--cr-border-subtle);
+  background: var(--cr-bg-void);
 }
 
 .bn-code-runner-output__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border-bottom: 1px solid #18181b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--cr-space-1) var(--cr-space-3);
+  background: rgba(0, 0, 0, 0.3);
+  min-height: 28px;
 }
 
 .bn-code-runner-output__label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #52525b;
-    letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: var(--cr-space-2);
+  font-family: var(--cr-font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cr-text-faint);
 }
 
+/* ─── Status Indicator ─── */
+
 .bn-code-runner-status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--bn-cr-text-muted);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cr-text-muted);
 }
-.bn-code-runner-status-dot.success { background-color: var(--bn-cr-success); box-shadow: 0 0 8px var(--bn-cr-success); }
-.bn-code-runner-status-dot.error { background-color: var(--bn-cr-error); box-shadow: 0 0 8px var(--bn-cr-error); }
+
+.bn-code-runner-status-dot.success {
+  background: var(--cr-success);
+  box-shadow: 0 0 6px var(--cr-success);
+  animation: pulse-success 2s ease-in-out;
+}
+
+.bn-code-runner-status-dot.error {
+  background: var(--cr-error);
+  box-shadow: 0 0 6px var(--cr-error);
+  animation: pulse-error 2s ease-in-out;
+}
+
+@keyframes pulse-success {
+  0%, 100% { box-shadow: 0 0 6px var(--cr-success); }
+  50% { box-shadow: 0 0 12px var(--cr-success); }
+}
+
+@keyframes pulse-error {
+  0%, 100% { box-shadow: 0 0 6px var(--cr-error); }
+  50% { box-shadow: 0 0 12px var(--cr-error); }
+}
+
+/* ─── Output Content ─── */
 
 .bn-code-runner-output__content {
   margin: 0;
-  padding: 12px;
-  font-family: var(--bn-cr-font-mono);
+  padding: var(--cr-space-3) var(--cr-space-4);
+  font-family: var(--cr-font-mono);
   font-size: 12px;
-  color: var(--bn-cr-text);
+  line-height: 1.6;
+  color: var(--cr-text-secondary);
   white-space: pre-wrap;
-  word-break: break-all;
-  line-height: 1.5;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .bn-code-runner-output__content.error {
@@ -184,40 +388,123 @@
 }
 
 .bn-code-runner-output__content--empty {
-  color: var(--bn-cr-text-muted);
+  color: var(--cr-text-faint);
   font-style: italic;
-  opacity: 0.5;
 }
 
-.bn-code-runner-spinner {
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(16, 185, 129, 0.3);
-    border-top-color: var(--bn-cr-success);
-    border-radius: 50%;
-    animation: bn-spin 0.8s linear infinite;
-    display: inline-block;
+/* Scrollbar styling for output */
+.bn-code-runner-output__content::-webkit-scrollbar {
+  width: 6px;
 }
 
-@keyframes bn-spin {
-  to { transform: rotate(360deg); }
+.bn-code-runner-output__content::-webkit-scrollbar-track {
+  background: transparent;
 }
+
+.bn-code-runner-output__content::-webkit-scrollbar-thumb {
+  background: var(--cr-border);
+  border-radius: 3px;
+}
+
+.bn-code-runner-output__content::-webkit-scrollbar-thumb:hover {
+  background: var(--cr-text-faint);
+}
+
+/* ─── Image Output ─── */
 
 .bn-code-runner-output__images {
-  padding: 12px;
+  padding: var(--cr-space-4);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--cr-space-3);
+  background: var(--cr-bg-base);
 }
 
 .bn-code-runner-output__image {
   display: block;
   max-width: 100%;
-  max-height: 400px; 
+  max-height: 400px;
   width: auto;
   height: auto;
   object-fit: contain;
-  border-radius: 4px;
-  border: 1px solid var(--bn-cr-border);
-  background: #0a0a0b;
+  border-radius: var(--cr-radius-md);
+  border: 1px solid var(--cr-border);
+  background: var(--cr-bg-elevated);
+}
+
+/* =============================================================================
+   Loading State
+   ============================================================================= */
+
+.bn-code-runner-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid rgba(59, 130, 246, 0.25);
+  border-top-color: var(--cr-running);
+  border-radius: 50%;
+  animation: cr-spin 0.7s linear infinite;
+}
+
+@keyframes cr-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =============================================================================
+   Legacy Class Support (for lang badge if used)
+   ============================================================================= */
+
+.bn-code-runner-lang-badge {
+  font-family: var(--cr-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cr-text-muted);
+  background: transparent;
+  padding: 0;
+}
+
+/* =============================================================================
+   Responsive Adjustments
+   ============================================================================= */
+
+@media (max-width: 600px) {
+  .bn-code-runner-header {
+    padding: var(--cr-space-2);
+  }
+  
+  .bn-code-runner-toolbar {
+    gap: 1px;
+  }
+  
+  .bn-code-runner-btn {
+    padding: 4px 6px;
+    font-size: 9px;
+  }
+  
+  .bn-code-runner-editor .cm-scroller {
+    font-size: 12px;
+  }
+  
+  .bn-code-runner-output__content {
+    font-size: 11px;
+    padding: var(--cr-space-2) var(--cr-space-3);
+  }
+}
+
+/* =============================================================================
+   Print Styles
+   ============================================================================= */
+
+@media print {
+  .bn-code-runner-block {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .bn-code-runner-header,
+  .bn-code-runner-toolbar {
+    display: none;
+  }
 }

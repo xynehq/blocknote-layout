@@ -11,10 +11,14 @@ import { VscPlay, VscCode } from "react-icons/vsc";
 import ReactCodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { Extension } from "@codemirror/state";
 import { python } from "@codemirror/lang-python";
+import { javascript } from "@codemirror/lang-javascript";
 import { runPython, isPyodideLoaded, isPyodideLoading } from "./pyodide";
+import { runJavaScript } from "./javascript";
 import "./styles/code-runner.css";
 
 const TYPE = "codeRunner" as const;
+
+export type SupportedLanguage = "python" | "javascript";
 
 const DEFAULT_PYTHON_CODE = `# Write your Python code here
 print("Hello, World!")
@@ -23,8 +27,19 @@ print("Hello, World!")
 result = sum(range(1, 11))
 print(f"Sum of 1-10: {result}")`;
 
+const DEFAULT_JAVASCRIPT_CODE = `// Write your JavaScript code here
+console.log("Hello, World!");
+
+// Try some calculations
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const sum = numbers.reduce((a, b) => a + b, 0);
+console.log(\`Sum of 1-10: \${sum}\`);`;
+
 const codeRunnerPropSchema = {
   ...defaultProps,
+  language: {
+    default: "python" as SupportedLanguage,
+  },
   code: {
     default: DEFAULT_PYTHON_CODE as string,
   },
@@ -50,7 +65,8 @@ export const CodeBlock = createReactBlockSpec(
   {
     render: ({ block, editor }) => {
       const isReadOnly = useMemo(() => !editor.isEditable, [editor]);
-      const { code, output, outputImages, status } = block.props;
+      const { language, code, output, outputImages, status } = block.props;
+      const currentLanguage = (language as SupportedLanguage) || "python";
 
       const images: string[] = useMemo(() => {
         if (!outputImages) return [];
@@ -67,9 +83,25 @@ export const CodeBlock = createReactBlockSpec(
       const [isOutputCollapsed, setIsOutputCollapsed] = useState(false);
       const [isWrapped, setIsWrapped] = useState(false);
       const [isRunning, setIsRunning] = useState(false);
-      const [pyodideStatus, setPyodideStatus] = useState<"not-loaded" | "loading" | "ready">(
-        isPyodideLoaded() ? "ready" : isPyodideLoading() ? "loading" : "not-loaded"
+      const [runtimeStatus, setRuntimeStatus] = useState<"not-loaded" | "loading" | "ready">(
+        currentLanguage === "python" 
+          ? (isPyodideLoaded() ? "ready" : isPyodideLoading() ? "loading" : "not-loaded")
+          : "ready"
       );
+
+      const handleLanguageChange = useCallback((newLang: SupportedLanguage) => {
+        const newCode = newLang === "python" ? DEFAULT_PYTHON_CODE : DEFAULT_JAVASCRIPT_CODE;
+        editor.updateBlock(block, {
+          props: { 
+            ...block.props, 
+            language: newLang, 
+            code: newCode,
+            output: "",
+            outputImages: "",
+            status: "idle" 
+          },
+        });
+      }, [editor, block]);
 
       const handleCopy = useCallback(() => {
         navigator.clipboard.writeText(code);
@@ -88,22 +120,29 @@ export const CodeBlock = createReactBlockSpec(
         if (isRunning) return;
 
         setIsRunning(true);
-        setPyodideStatus("loading");
+        if (currentLanguage === "python") {
+          setRuntimeStatus("loading");
+        }
 
         editor.updateBlock(block, {
           props: { ...block.props, status: "running", output: "Running..." },
         });
 
         try {
-          const result = await runPython(code);
-          setPyodideStatus("ready");
+          const result = currentLanguage === "python" 
+            ? await runPython(code)
+            : await runJavaScript(code);
+          
+          if (currentLanguage === "python") {
+            setRuntimeStatus("ready");
+          }
 
           editor.updateBlock(block, {
             props: {
               ...block.props,
               status: result.success ? "success" : "error",
               output: result.error || result.output,
-              outputImages: result.images ? JSON.stringify(result.images) : "",
+              outputImages: "images" in result && result.images ? JSON.stringify(result.images) : "",
             },
           });
         } catch (err) {
@@ -117,17 +156,16 @@ export const CodeBlock = createReactBlockSpec(
         } finally {
           setIsRunning(false);
         }
-      }, [code, editor, block, isRunning]);
+      }, [code, editor, block, isRunning, currentLanguage]);
 
-      const pythonExtension = python();
-      
       const extensions = useMemo(() => {
-         const exts: Extension[] = [pythonExtension];
+         const langExtension = currentLanguage === "python" ? python() : javascript();
+         const exts: Extension[] = [langExtension];
          if (isWrapped) {
             exts.push(EditorView.lineWrapping);
          }
          return exts;
-      }, [isWrapped, pythonExtension]);
+      }, [isWrapped, currentLanguage]);
 
       return (
         <div
@@ -137,10 +175,17 @@ export const CodeBlock = createReactBlockSpec(
           {!isReadOnly && (
             <div className="bn-code-runner-header">
                 <div className="bn-code-runner-header__left">
-                    <span className="bn-code-runner-lang-badge">Python</span>
-                     {pyodideStatus === "loading" && (
+                    <select 
+                      className="bn-code-runner-lang-select"
+                      value={currentLanguage}
+                      onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
+                    >
+                      <option value="python">Python</option>
+                      <option value="javascript">JavaScript</option>
+                    </select>
+                     {currentLanguage === "python" && runtimeStatus === "loading" && (
                         <span style={{ fontSize: "11px", color: "#666", marginLeft: 8 }}>
-                            Loading...
+                            Loading Pyodide...
                         </span>
                     )}
                 </div>
@@ -255,7 +300,7 @@ export const CodeBlock = createReactBlockSpec(
 );
 
 export const insertCode = () => ({
-  title: "Python Code",
+  title: "Code Runner",
   group: "Other",
   onItemClick: <BSchema extends Record<string, BlockConfig>>(
     editor: BlockNoteEditor<BSchema>
@@ -264,7 +309,41 @@ export const insertCode = () => ({
       type: TYPE,
     });
   },
-  aliases: ["code", "python", "py", "run", "execute"],
+  aliases: ["code", "python", "py", "javascript", "js", "run", "execute"],
   icon: <VscCode />,
-  subtext: "Run Python code in the browser",
+  subtext: "Run Python or JavaScript code",
+});
+
+export const insertPythonCode = () => ({
+  title: "Python Code",
+  group: "Other",
+  onItemClick: <BSchema extends Record<string, BlockConfig>>(
+    editor: BlockNoteEditor<BSchema>
+  ) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    insertOrUpdateBlock(editor, {
+      type: TYPE,
+      props: { language: "python" },
+    } as any);
+  },
+  aliases: ["python", "py"],
+  icon: <VscCode />,
+  subtext: "Run Python code in browser (Pyodide)",
+});
+
+export const insertJavaScriptCode = () => ({
+  title: "JavaScript Code",
+  group: "Other",
+  onItemClick: <BSchema extends Record<string, BlockConfig>>(
+    editor: BlockNoteEditor<BSchema>
+  ) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    insertOrUpdateBlock(editor, {
+      type: TYPE,
+      props: { language: "javascript" },
+    } as any);
+  },
+  aliases: ["javascript", "js"],
+  icon: <VscCode />,
+  subtext: "Run JavaScript code in browser",
 });
