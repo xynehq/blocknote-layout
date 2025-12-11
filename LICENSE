@@ -1,0 +1,12 @@
+# Licenses
+
+This package contains components under different licenses:
+
+## Code Runner (`lib/coderunner/`)
+
+Licensed under [MIT](lib/coderunner/LICENSE)
+Copyright (c) 2025 Harshpreet Singh
+
+---
+
+See individual LICENSE files in each component directory for full license text.
