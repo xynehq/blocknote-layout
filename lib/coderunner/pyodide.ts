@@ -30,14 +30,28 @@ export async function getPyodide(): Promise<PyodideInterface> {
     }
 
     loadingPromise = (async () => {
-        const pyodideModule = await import("pyodide") as any;
-        const loadPyodide = pyodideModule.loadPyodide;
+        const originalConsoleLog = console.log;
+        const originalConsoleWarn = console.warn;
+        
+        console.log = () => {};
+        console.warn = () => {};
+        
+        try {
+            const pyodideModule = await import("pyodide") as any;
+            const loadPyodide = pyodideModule.loadPyodide;
 
-        pyodideInstance = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.29.0/full/",
-        }) as PyodideInterface;
+            pyodideInstance = await loadPyodide({
+                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.29.0/full/",
+                stdout: () => {}, // Suppress Pyodide stdout
+                stderr: () => {}, // Suppress Pyodide stderr
+            }) as PyodideInterface;
 
-        return pyodideInstance;
+            return pyodideInstance;
+        } finally {
+            // Restore console methods
+            console.log = originalConsoleLog;
+            console.warn = originalConsoleWarn;
+        }
     })();
 
     return loadingPromise;
