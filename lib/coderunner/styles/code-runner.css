@@ -1,14 +1,13 @@
-/* Base Variables - Deep, rich dark theme */
 :root {
-  --bn-cr-bg: #09090b;       /* Very deep charcoal/black */
-  --bn-cr-border: #27272a;   /* Subtle border */
-  --bn-cr-accent: #6d28d9;   /* Electric Violet/Primary */
+  --bn-cr-bg: #09090b;       
+  --bn-cr-border: #27272a;   
+  --bn-cr-accent: #6d28d9;   
   --bn-cr-accent-hover: #7c3aed;
-  --bn-cr-text: #e4e4e7;     /* High contrast text */
+  --bn-cr-text: #e4e4e7;     
   --bn-cr-text-muted: #a1a1aa;
-  --bn-cr-success: #10b981;  /* Emerald */
-  --bn-cr-error: #ef4444;    /* Red */
-  --bn-cr-font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace; /* Premium Mono */
+  --bn-cr-success: #10b981;  
+  --bn-cr-error: #ef4444;    
+  --bn-cr-font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace; 
   --bn-cr-font-ui: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -16,9 +15,9 @@
   font-family: var(--bn-cr-font-ui);
   background-color: var(--bn-cr-bg);
   border: 1px solid var(--bn-cr-border);
-  border-radius: 8px; /* Slightly tighter radius than usual 12px */
+  border-radius: 8px; 
   margin: 1.5rem 0;
-  width: 100%; /* Force full width */
+  width: 100%; 
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -31,15 +30,14 @@
 .bn-code-runner-block--readonly {
   border-style: dashed;
 }
-
-/* Header / Toolbar */
+  
 .bn-code-runner-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
   border-bottom: 1px solid var(--bn-cr-border);
-  background: rgba(255, 255, 255, 0.02); /* Very subtle tint */
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .bn-code-runner-header__left {
@@ -57,7 +55,6 @@
     padding: 0;
 }
 
-/* Toolbar Buttons */
 .bn-code-runner-toolbar {
   display: flex;
   align-items: center;
@@ -96,7 +93,6 @@
     margin: 0 6px;
 }
 
-/* Run Button - Unique Style */
 .bn-code-runner-btn--run {
   color: var(--bn-cr-success);
   background: rgba(16, 185, 129, 0.1);
@@ -105,7 +101,7 @@
 
 .bn-code-runner-btn--run:hover:not(:disabled) {
   background: var(--bn-cr-success);
-  color: #000; /* High contrast on green */
+  color: #000;
   border-color: var(--bn-cr-success);
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
@@ -115,7 +111,6 @@
   cursor: wait;
 }
 
-/* Editor Area */
 .bn-code-runner-editor .cm-editor {
     background-color: transparent !important;
 }
@@ -130,7 +125,7 @@
 .bn-code-runner-editor .cm-gutters {
     background: transparent !important;
     border-right: none !important;
-    color: #52525b !important; /* Muted gutter numbers */
+    color: #52525b !important; 
 }
 
 .bn-code-runner-editor .cm-gutterElement {
@@ -141,12 +136,10 @@
     caret-color: var(--bn-cr-accent) !important;
 }
 
-/* Output Panel */
 .bn-code-runner-output {
   border-top: 1px solid var(--bn-cr-border);
-  background: #000; /* Pure black for terminal feel */
+  background: #000; 
   padding: 0;
-  /* max-height: 200px; overflow-y: auto;  removed strict height limit for now */ 
 }
 
 .bn-code-runner-output__header {
@@ -187,7 +180,7 @@
 }
 
 .bn-code-runner-output__content.error {
-  color: #fca5a5; /* Light red */
+  color: #fca5a5;
 }
 
 .bn-code-runner-output__content--empty {
@@ -196,7 +189,6 @@
   opacity: 0.5;
 }
 
-/* Spinner */
 .bn-code-runner-spinner {
     width: 12px;
     height: 12px;
@@ -211,7 +203,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Image Output */
 .bn-code-runner-output__images {
   padding: 12px;
   display: flex;
@@ -222,7 +213,7 @@
 .bn-code-runner-output__image {
   display: block;
   max-width: 100%;
-  max-height: 400px; /* Limit graph height */
+  max-height: 400px; 
   width: auto;
   height: auto;
   object-fit: contain;

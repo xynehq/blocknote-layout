@@ -23,7 +23,6 @@ print("Hello, World!")
 result = sum(range(1, 11))
 print(f"Sum of 1-10: {result}")`;
 
-// Prop schema for the code block
 const codeRunnerPropSchema = {
   ...defaultProps,
   code: {
@@ -33,10 +32,10 @@ const codeRunnerPropSchema = {
     default: "" as string,
   },
   outputImages: {
-    default: "" as string, // JSON stringified array of base64 images
+    default: "" as string, 
   },
   status: {
-    default: "idle" as string, // idle | running | success | error
+    default: "idle" as string,
   },
 } satisfies PropSchema;
 
@@ -53,7 +52,6 @@ export const CodeBlock = createReactBlockSpec(
       const isReadOnly = useMemo(() => !editor.isEditable, [editor]);
       const { code, output, outputImages, status } = block.props;
 
-      // Parse images from JSON string
       const images: string[] = useMemo(() => {
         if (!outputImages) return [];
         try {
@@ -121,10 +119,8 @@ export const CodeBlock = createReactBlockSpec(
         }
       }, [code, editor, block, isRunning]);
 
-      // Python extension for CodeMirror
       const pythonExtension = python();
       
-      // Editor Line Wrapping Extension
       const extensions = useMemo(() => {
          const exts: Extension[] = [pythonExtension];
          if (isWrapped) {
@@ -138,7 +134,6 @@ export const CodeBlock = createReactBlockSpec(
           ref={containerRef}
           className={`bn-code-runner-block ${isReadOnly ? "bn-code-runner-block--readonly" : ""}`}
         >
-          {/* Minimal Toolbar / Header */}
           {!isReadOnly && (
             <div className="bn-code-runner-header">
                 <div className="bn-code-runner-header__left">
@@ -187,7 +182,6 @@ export const CodeBlock = createReactBlockSpec(
             </div>
           )}
 
-          {/* Code Editor Area */}
           {!isCollapsed && (
               <div className="bn-code-runner-content">
                 <div className="bn-code-runner-editor">
@@ -205,7 +199,6 @@ export const CodeBlock = createReactBlockSpec(
                     />
                 </div>
 
-                 {/* Output Panel */}
                 {(output || images.length > 0 || status !== "idle") && (
                     <div className="bn-code-runner-output">
                     <div className="bn-code-runner-output__header">
@@ -225,7 +218,6 @@ export const CodeBlock = createReactBlockSpec(
                     
                     {!isOutputCollapsed && (
                         <>
-                            {/* Render images first */}
                             {images.length > 0 && (
                                 <div className="bn-code-runner-output__images">
                                     {images.map((img, idx) => (
@@ -239,7 +231,6 @@ export const CodeBlock = createReactBlockSpec(
                                 </div>
                             )}
                             
-                            {/* Text output */}
                             {output && (
                                 <pre className={`bn-code-runner-output__content ${status === "error" ? "error" : ""}`}>
                                     {output}
@@ -263,9 +254,6 @@ export const CodeBlock = createReactBlockSpec(
   }
 );
 
-/**
- * Creates a slash menu item for inserting a Python code block
- */
 export const insertCode = () => ({
   title: "Python Code",
   group: "Other",
