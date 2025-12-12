@@ -45,10 +45,16 @@ export interface CodeRunnerConfig {
     judge0ApiUrl?: string;
 
     /**
-     * Optional API key if using a private Judge0 instance or rapidapi.
-     * Adds 'X-Auth-Token' header.
+     * Optional API key. Adds 'X-Auth-Token' header.
+     *
      */
     judge0ApiKey?: string;
+
+    /**
+     * Custom headers to include in every request.
+     * Use this for authentication (e.g., { 'Authorization': 'Bearer ...' })
+     */
+    headers?: Record<string, string>;
 
     /**
      * Custom execution handler.
@@ -131,6 +137,7 @@ async function runWithJudge0(
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
+            ...(config.headers || {}),
         };
 
         if (config.judge0ApiKey) {
