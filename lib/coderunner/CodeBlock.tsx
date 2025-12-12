@@ -10,30 +10,19 @@ import { useMemo, useCallback, useState, useRef } from "react";
 import { VscPlay, VscCode } from "react-icons/vsc";
 import ReactCodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { Extension } from "@codemirror/state";
-import { python } from "@codemirror/lang-python";
-import { javascript } from "@codemirror/lang-javascript";
-import { runPython, isPyodideLoaded, isPyodideLoading } from "./pyodide";
-import { runJavaScript } from "./javascript";
+import { executeCode } from "./runner";
+import { 
+  SupportedLanguage, 
+  getCodeMirrorExtension, 
+  getDefaultCode,
+  getSupportedLanguages
+} from "./languages";
 import "./styles/code-runner.css";
 
 const TYPE = "codeRunner" as const;
 
-export type SupportedLanguage = "python" | "javascript";
-
-const DEFAULT_PYTHON_CODE = `# Write your Python code here
-print("Hello, World!")
-
-# Try some calculations
-result = sum(range(1, 11))
-print(f"Sum of 1-10: {result}")`;
-
-const DEFAULT_JAVASCRIPT_CODE = `// Write your JavaScript code here
-console.log("Hello, World!");
-
-// Try some calculations
-const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const sum = numbers.reduce((a, b) => a + b, 0);
-console.log(\`Sum of 1-10: \${sum}\`);`;
+// Re-export the type for consumers
+export type { SupportedLanguage } from "./languages";
 
 const codeRunnerPropSchema = {
   ...defaultProps,
@@ -41,7 +30,7 @@ const codeRunnerPropSchema = {
     default: "python" as SupportedLanguage,
   },
   code: {
-    default: DEFAULT_PYTHON_CODE as string,
+    default: getDefaultCode('python') as string,
   },
   output: {
     default: "" as string,
@@ -83,14 +72,9 @@ export const CodeBlock = createReactBlockSpec(
       const [isOutputCollapsed, setIsOutputCollapsed] = useState(false);
       const [isWrapped, setIsWrapped] = useState(false);
       const [isRunning, setIsRunning] = useState(false);
-      const [runtimeStatus, setRuntimeStatus] = useState<"not-loaded" | "loading" | "ready">(
-        currentLanguage === "python" 
-          ? (isPyodideLoaded() ? "ready" : isPyodideLoading() ? "loading" : "not-loaded")
-          : "ready"
-      );
 
       const handleLanguageChange = useCallback((newLang: SupportedLanguage) => {
-        const newCode = newLang === "python" ? DEFAULT_PYTHON_CODE : DEFAULT_JAVASCRIPT_CODE;
+        const newCode = getDefaultCode(newLang);
         editor.updateBlock(block, {
           props: { 
             ...block.props, 
@@ -120,29 +104,20 @@ export const CodeBlock = createReactBlockSpec(
         if (isRunning) return;
 
         setIsRunning(true);
-        if (currentLanguage === "python") {
-          setRuntimeStatus("loading");
-        }
 
         editor.updateBlock(block, {
           props: { ...block.props, status: "running", output: "Running..." },
         });
 
         try {
-          const result = currentLanguage === "python" 
-            ? await runPython(code)
-            : await runJavaScript(code);
-          
-          if (currentLanguage === "python") {
-            setRuntimeStatus("ready");
-          }
+          const result = await executeCode(code, currentLanguage);
 
           editor.updateBlock(block, {
             props: {
               ...block.props,
               status: result.success ? "success" : "error",
               output: result.error || result.output,
-              outputImages: "images" in result && result.images ? JSON.stringify(result.images) : "",
+              outputImages: "",
             },
           });
         } catch (err) {
@@ -159,7 +134,7 @@ export const CodeBlock = createReactBlockSpec(
       }, [code, editor, block, isRunning, currentLanguage]);
 
       const extensions = useMemo(() => {
-         const langExtension = currentLanguage === "python" ? python() : javascript();
+         const langExtension = getCodeMirrorExtension(currentLanguage);
          const exts: Extension[] = [langExtension];
          if (isWrapped) {
             exts.push(EditorView.lineWrapping);
@@ -180,14 +155,10 @@ export const CodeBlock = createReactBlockSpec(
                       value={currentLanguage}
                       onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
                     >
-                      <option value="python">Python</option>
-                      <option value="javascript">JavaScript</option>
+                      {getSupportedLanguages().map(lang => (
+                        <option key={lang.value} value={lang.value}>{lang.label}</option>
+                      ))}
                     </select>
-                     {currentLanguage === "python" && runtimeStatus === "loading" && (
-                        <span style={{ fontSize: "11px", color: "#666", marginLeft: 8 }}>
-                            Loading Pyodide...
-                        </span>
-                    )}
                 </div>
                 
                 <div className="bn-code-runner-toolbar">
