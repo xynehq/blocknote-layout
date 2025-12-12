@@ -7,6 +7,11 @@ This package contains components under different licenses:
 Licensed under [MIT](lib/coderunner/LICENSE)
 Copyright (c) 2025 Harshpreet Singh
 
+## SlideShow (`lib/slideshow`)
+
+Licensed under [MIT](lib/slideshow/LICENSE)
+Copyright (c) 2025 Satvik Batra
+
 ---
 
 See individual LICENSE files in each component directory for full license text.

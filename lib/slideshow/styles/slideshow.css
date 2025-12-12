@@ -1,0 +1,998 @@
+/* Slideshow Container */
+.bn-slideshow-container {
+  margin: 16px 0;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+/* Header */
+.bn-slideshow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.bn-slideshow-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.bn-slide-count {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.bn-slideshow-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.bn-slideshow-theme-select {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.bn-slideshow-theme-select:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.bn-slideshow-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.bn-slideshow-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.bn-slideshow-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(239, 68, 68, 1);
+}
+
+/* Content Area */
+.bn-slideshow-content {
+  background: #f8fafc;
+}
+
+/* Editor Mode */
+.bn-slideshow-editor {
+  padding: 16px;
+}
+
+.bn-slideshow-editor-content {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Preview Container - Single Full Slide */
+.bn-slideshow-preview-container {
+  background: #f8fafc;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+  position: relative;
+}
+
+/* Preview mode for presentation modal */
+.bn-presentation-preview {
+  position: relative !important;
+  width: 100% !important;
+  height: 500px !important;
+  max-width: 960px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  pointer-events: none !important;
+}
+
+.bn-presentation-preview .reveal {
+  height: 100% !important;
+}
+
+.bn-presentation-preview .reveal .slides {
+  height: 100% !important;
+}
+
+.bn-presentation-preview .reveal .controls,
+.bn-presentation-preview .reveal .progress {
+  display: none !important;
+}
+
+/* Presentation Modal - Clean White Theme */
+.bn-presentation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff;
+  z-index: 10000;
+}
+
+.bn-presentation-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  color: #1a202c;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10001;
+  transition: all 0.2s;
+}
+
+.bn-presentation-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  transform: scale(1.05);
+}
+
+/* Presentation Modal - Reveal.js Base Overrides */
+.bn-presentation-modal .reveal {
+  background: #ffffff !important;
+  color: #1a202c !important;
+}
+
+.bn-presentation-modal .reveal .slides {
+  text-align: left !important;
+}
+
+.bn-presentation-modal .reveal .slides section {
+  padding: 60px 80px !important;
+  text-align: left !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  counter-reset: numbered-list !important;
+}
+
+/* Presentation - Headings */
+.bn-presentation-modal .reveal h1,
+.bn-presentation-modal .reveal .bn-heading[class*="level-1"],
+.bn-presentation-modal .reveal h1.bn-heading {
+  font-size: 4em !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.5em 0 !important;
+  color: #1a202c !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+}
+
+.bn-presentation-modal .reveal h2,
+.bn-presentation-modal .reveal .bn-heading[class*="level-2"],
+.bn-presentation-modal .reveal h2.bn-heading {
+  font-size: 3em !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.5em 0 !important;
+  color: #2d3748 !important;
+  line-height: 1.3 !important;
+  text-transform: none !important;
+}
+
+.bn-presentation-modal .reveal h3,
+.bn-presentation-modal .reveal .bn-heading[class*="level-3"],
+.bn-presentation-modal .reveal h3.bn-heading {
+  font-size: 2.2em !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.4em 0 !important;
+  color: #2d3748 !important;
+  line-height: 1.3 !important;
+  text-transform: none !important;
+}
+
+.bn-presentation-modal .reveal h4,
+.bn-presentation-modal .reveal h5,
+.bn-presentation-modal .reveal h6 {
+  font-size: 1.6em !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.4em 0 !important;
+  color: #4a5568 !important;
+  text-transform: none !important;
+}
+
+/* Presentation - Paragraphs */
+.bn-presentation-modal .reveal p,
+.bn-presentation-modal .reveal .bn-paragraph {
+  font-size: 1.5em !important;
+  line-height: 1.6 !important;
+  margin: 0.6em 0 !important;
+  color: #2d3748 !important;
+  text-align: left !important;
+}
+
+/* Presentation - Lists */
+.bn-presentation-modal .reveal ul,
+.bn-presentation-modal .reveal ol,
+.bn-presentation-modal .reveal .bn-list {
+  list-style: none !important;
+  margin: 1em 0 !important;
+  padding: 0 !important;
+}
+
+.bn-presentation-modal .reveal ul li,
+.bn-presentation-modal .reveal .bn-list li,
+.bn-presentation-modal .reveal li.bn-list-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.8em !important;
+  margin: 0.5em 0 !important;
+  padding-left: 0 !important;
+  font-size: 1.5em !important;
+  line-height: 1.6 !important;
+  color: #2d3748 !important;
+  text-align: left !important;
+}
+
+.bn-presentation-modal .reveal ul li::before,
+.bn-presentation-modal .reveal .bn-list:not(.bn-numbered-list) li::before,
+.bn-presentation-modal .reveal li.bn-list-item:not(.bn-numbered)::before {
+  content: "•" !important;
+  flex-shrink: 0 !important;
+  font-size: 1em !important;
+  line-height: 1.6 !important;
+  color: #667eea !important;
+  font-weight: bold !important;
+}
+
+/* Presentation - Numbered Lists */
+.bn-presentation-modal .reveal ol li,
+.bn-presentation-modal .reveal .bn-list.bn-numbered-list li,
+.bn-presentation-modal .reveal li.bn-numbered {
+  counter-increment: numbered-list !important;
+}
+
+.bn-presentation-modal .reveal ol li::before,
+.bn-presentation-modal .reveal .bn-list.bn-numbered-list li::before,
+.bn-presentation-modal .reveal li.bn-numbered::before {
+  content: counter(numbered-list) "." !important;
+  flex-shrink: 0 !important;
+  font-weight: 700 !important;
+  color: #667eea !important;
+  min-width: 1.5em !important;
+  font-size: 1em !important;
+  line-height: 1.6 !important;
+}
+
+/* Presentation - Code Blocks */
+.bn-presentation-modal .reveal pre,
+.bn-presentation-modal .reveal .bn-code-block {
+  background: #f7fafc !important;
+  color: #1a202c !important;
+  padding: 1.2em !important;
+  border-radius: 8px !important;
+  margin: 1em 0 !important;
+  font-size: 1em !important;
+  overflow-x: auto !important;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace !important;
+  line-height: 1.5 !important;
+  border: 2px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+.bn-presentation-modal .reveal pre code,
+.bn-presentation-modal .reveal .bn-code-block code {
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 1em !important;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace !important;
+  white-space: pre !important;
+  display: block !important;
+}
+
+/* Presentation - Inline Code */
+.bn-presentation-modal .reveal p code,
+.bn-presentation-modal .reveal li code,
+.bn-presentation-modal .reveal .bn-inline-code {
+  background: #f7fafc !important;
+  color: #e53e3e !important;
+  padding: 0.2em 0.5em !important;
+  border-radius: 4px !important;
+  font-size: 0.85em !important;
+  font-weight: 600 !important;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Presentation - Tables */
+.bn-presentation-modal .reveal table,
+.bn-presentation-modal .reveal .bn-table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 1.5em 0 !important;
+  font-size: 1.2em !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+.bn-presentation-modal .reveal th,
+.bn-presentation-modal .reveal td {
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.6em 1em !important;
+  text-align: left !important;
+}
+
+.bn-presentation-modal .reveal th {
+  background: #f7fafc !important;
+  color: #1a202c !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #cbd5e0 !important;
+}
+
+.bn-presentation-modal .reveal tr:nth-child(even) {
+  background: #fafbfc !important;
+}
+
+/* Presentation - Blockquotes */
+.bn-presentation-modal .reveal blockquote {
+  border-left: 4px solid #667eea !important;
+  padding-left: 1.5em !important;
+  margin: 1.5em 0 !important;
+  color: #4a5568 !important;
+  font-style: italic !important;
+  background: #f7fafc !important;
+  padding: 1em 1em 1em 1.5em !important;
+  border-radius: 0 8px 8px 0 !important;
+  box-shadow: none !important;
+  font-size: 1.3em !important;
+}
+
+/* Presentation - Images */
+.bn-presentation-modal .reveal img,
+.bn-presentation-modal .reveal .bn-image {
+  max-width: 100% !important;
+  max-height: 500px !important;
+  object-fit: contain !important;
+  margin: 1em auto !important;
+  display: block !important;
+  border-radius: 8px !important;
+}
+
+/* Presentation - Links */
+.bn-presentation-modal .reveal a {
+  color: #667eea !important;
+  text-decoration: none !important;
+  border-bottom: 2px solid #667eea !important;
+  transition: all 0.2s !important;
+}
+
+.bn-presentation-modal .reveal a:hover {
+  color: #764ba2 !important;
+  border-bottom-color: #764ba2 !important;
+}
+
+/* Presentation - Text Formatting */
+.bn-presentation-modal .reveal strong {
+  color: #1a202c !important;
+  font-weight: 700 !important;
+}
+
+.bn-presentation-modal .reveal em {
+  color: #2d3748 !important;
+  font-style: italic !important;
+}
+
+/* Slideshow Node View */
+.bn-slideshow-node {
+  display: block;
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.bn-slideshow-preview {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.bn-slideshow-button,
+.bn-slideshow-edit-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #4285f4;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bn-slideshow-button:hover,
+.bn-slideshow-edit-button:hover {
+  background: #3367d6;
+}
+
+.bn-slideshow-edit-button {
+  background: #34a853;
+}
+
+.bn-slideshow-edit-button:hover {
+  background: #2d8e47;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Responsive BlockNote elements in presentation */
+.bn-presentation-modal .reveal .bn-block-outer {
+  margin: 0.4em 0 !important;
+  padding: 0 !important;
+}
+
+.bn-presentation-modal .reveal .bn-block-content {
+  font-size: 1em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Responsive headings - scale based on content */
+.bn-presentation-modal .reveal .bn-block-outer h1 {
+  font-size: clamp(1.2em, 3.5vw, 3em) !important;
+  margin: 0 0 0.2em 0 !important;
+  line-height: 1.2 !important;
+}
+
+.bn-presentation-modal .reveal .bn-block-outer h2 {
+  font-size: clamp(1em, 2.8vw, 2.3em) !important;
+  margin: 0 0 0.2em 0 !important;
+  line-height: 1.3 !important;
+}
+
+.bn-presentation-modal .reveal .bn-block-outer h3 {
+  font-size: clamp(0.9em, 2.2vw, 1.8em) !important;
+  margin: 0 0 0.2em 0 !important;
+  line-height: 1.3 !important;
+}
+
+/* Responsive paragraphs */
+.bn-presentation-modal .reveal .bn-block-outer p {
+  font-size: clamp(0.7em, 1.3vw, 1.1em) !important;
+  margin: 0.15em 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Counter for numbered list items across slides */
+.bn-presentation-modal .reveal .slides section {
+  counter-reset: slide-numbered-list !important;
+}
+
+/* Responsive lists with proper alignment */
+.bn-presentation-modal .reveal .bn-block-outer ul,
+.bn-presentation-modal .reveal .bn-block-outer ol {
+  margin: 0.25em 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+/* Bullet list items - using flexbox with baseline alignment */
+.bn-presentation-modal .reveal .bn-block-outer [data-content-type="bulletListItem"],
+.bn-presentation-modal .reveal .bn-block-outer ul li {
+  font-size: clamp(0.7em, 1.3vw, 1.1em) !important;
+  margin: 0.15em 0 !important;
+  line-height: 1.4 !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  text-indent: 0 !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 0.5em !important;
+  text-align: left !important;
+}
+
+.bn-presentation-modal .reveal .bn-block-outer [data-content-type="bulletListItem"]::before,
+.bn-presentation-modal .reveal .bn-block-outer ul li::before {
+  content: "•" !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  font-size: 1em !important;
+  flex-shrink: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Numbered list items - using flexbox with baseline alignment */
+.bn-presentation-modal .reveal .bn-block-outer [data-content-type="numberedListItem"],
+.bn-presentation-modal .reveal .bn-block-outer ol li {
+  font-size: clamp(0.7em, 1.3vw, 1.1em) !important;
+  margin: 0.15em 0 !important;
+  line-height: 1.4 !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  text-indent: 0 !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 0.5em !important;
+  text-align: left !important;
+  counter-increment: slide-numbered-list !important;
+}
+
+.bn-presentation-modal .reveal .bn-block-outer [data-content-type="numberedListItem"]::before,
+.bn-presentation-modal .reveal .bn-block-outer ol li::before {
+  content: counter(slide-numbered-list) "." !important;
+  color: inherit !important;
+  font-weight: normal !important;
+  font-size: 1em !important;
+  flex-shrink: 0 !important;
+  min-width: 1.5em !important;
+  line-height: 1.4 !important;
+}
+
+/* Remove native list markers */
+.bn-presentation-modal .reveal .bn-block-outer li::marker {
+  display: none !important;
+  content: none !important;
+}
+
+/* Responsive blockquotes */
+.bn-presentation-modal .reveal .bn-block-outer blockquote {
+  font-size: clamp(0.7em, 1.2vw, 1em) !important;
+  margin: 0.25em 0 !important;
+  padding: 0.5em 0.7em !important;
+  line-height: 1.4 !important;
+}
+
+/* Responsive tables */
+.bn-presentation-modal .reveal .bn-block-outer table {
+  margin: 0.25em 0 !important;
+  font-size: clamp(0.6em, 1.1vw, 0.95em) !important;
+  width: 100% !important;
+}
+
+.bn-presentation-modal .reveal .bn-block-outer th,
+.bn-presentation-modal .reveal .bn-block-outer td {
+  padding: 0.25em 0.4em !important;
+  line-height: 1.3 !important;
+}
+
+/* Ensure slides fit content with minimal scrolling */
+.bn-presentation-modal .reveal .slides section {
+  height: 100% !important;
+  max-height: 100vh !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  padding: 35px 55px !important;
+  box-sizing: border-box !important;
+}
+
+/* Add scrollbar styling for overflow content */
+.bn-presentation-modal .reveal .slides section::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.bn-presentation-modal .reveal .slides section::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-radius: 3px !important;
+}
+
+.bn-presentation-modal .reveal .slides section::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.4) !important;
+  border-radius: 3px !important;
+}
+
+.bn-presentation-modal .reveal .slides section::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.6) !important;
+}
+/* Black Theme - Fixed colors */
+.bn-presentation-modal[data-theme="black"] .reveal {
+  background: #0a0a0a !important;
+  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal .slides section {
+  background: transparent !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal h1,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-heading[class*="level-1"],
+.bn-presentation-modal[data-theme="black"] .reveal h1.bn-heading {
+  color: #00d4ff !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal h2,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-heading[class*="level-2"],
+.bn-presentation-modal[data-theme="black"] .reveal h2.bn-heading {
+  color: #00b8d4 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal h3,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-heading[class*="level-3"],
+.bn-presentation-modal[data-theme="black"] .reveal h3.bn-heading,
+.bn-presentation-modal[data-theme="black"] .reveal h4,
+.bn-presentation-modal[data-theme="black"] .reveal h5,
+.bn-presentation-modal[data-theme="black"] .reveal h6 {
+  color: #26c6da !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal p,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-paragraph {
+  color: #e0e0e0 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal ul li,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-list li,
+.bn-presentation-modal[data-theme="black"] .reveal li.bn-list-item {
+  color: #e0e0e0 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal strong {
+  color: #ffffff !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal em {
+  color: #b0b0b0 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal ul li::before,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-list:not(.bn-numbered-list) li::before,
+.bn-presentation-modal[data-theme="black"] .reveal li.bn-list-item:not(.bn-numbered)::before {
+  color: #ffffff !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal ol li::before,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-list.bn-numbered-list li::before,
+.bn-presentation-modal[data-theme="black"] .reveal li.bn-numbered::before {
+  color: #ffffff !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal a {
+  color: #00d4ff !important;
+  border-bottom-color: #00d4ff !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal a:hover {
+  color: #26c6da !important;
+  border-bottom-color: #26c6da !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal pre,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-code-block {
+  background: #1a1a1a !important;
+  color: #00ff88 !important;
+  border-color: #333 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal code {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #333 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal blockquote {
+  border-left-color: #00d4ff !important;
+  color: #b0b0b0 !important;
+  background: transparent !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal table,
+.bn-presentation-modal[data-theme="black"] .reveal th,
+.bn-presentation-modal[data-theme="black"] .reveal td {
+  border-color: #333 !important;
+  color: #e0e0e0 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal th {
+  background: #1a1a1a !important;
+  color: #00d4ff !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Beige Theme - Only color and font-family changes */
+.bn-presentation-modal[data-theme="beige"] .reveal {
+  background: #f5f0e8 !important;
+  font-family: 'Baskerville', 'Palatino Linotype', 'Book Antiqua', 'Georgia', serif !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal .slides section {
+  background: transparent !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal h1,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-heading[class*="level-1"],
+.bn-presentation-modal[data-theme="beige"] .reveal h1.bn-heading {
+  color: #3e2723 !important;
+  font-family: 'Didot', 'Bodoni MT', 'Playfair Display', serif !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal h2,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-heading[class*="level-2"],
+.bn-presentation-modal[data-theme="beige"] .reveal h2.bn-heading,
+.bn-presentation-modal[data-theme="beige"] .reveal h3,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-heading[class*="level-3"],
+.bn-presentation-modal[data-theme="beige"] .reveal h3.bn-heading,
+.bn-presentation-modal[data-theme="beige"] .reveal h4,
+.bn-presentation-modal[data-theme="beige"] .reveal h5,
+.bn-presentation-modal[data-theme="beige"] .reveal h6 {
+  color: #4e342e !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal p,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-paragraph {
+  color: #3e2723 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal ul li,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-list li,
+.bn-presentation-modal[data-theme="beige"] .reveal li.bn-list-item {
+  color: #3e2723 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal strong {
+  color: #3e2723 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal em {
+  color: #4e342e !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal ul li::before,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-list:not(.bn-numbered-list) li::before,
+.bn-presentation-modal[data-theme="beige"] .reveal li.bn-list-item:not(.bn-numbered)::before {
+  color: #8d6e63 !important;
+  content: '◆' !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal ol li::before,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-list.bn-numbered-list li::before,
+.bn-presentation-modal[data-theme="beige"] .reveal li.bn-numbered::before {
+  color: #8d6e63 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal a {
+  color: #6d4c41 !important;
+  border-bottom-color: #a1887f !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal a:hover {
+  color: #5d4037 !important;
+  border-bottom-color: #8d6e63 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal pre,
+.bn-presentation-modal[data-theme="beige"] .reveal .bn-code-block {
+  background: #e8dcc8 !important;
+  color: #3e2723 !important;
+  border-color: #d7ccc8 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal code {
+  background: #e8dcc8 !important;
+  color: #6d4c41 !important;
+  border-color: #d7ccc8 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal blockquote {
+  border-left-color: #8d6e63 !important;
+  color: #4e342e !important;
+  background: transparent !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal table,
+.bn-presentation-modal[data-theme="beige"] .reveal th,
+.bn-presentation-modal[data-theme="beige"] .reveal td {
+  border-color: #d7ccc8 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal th {
+  background: #e8dcc8 !important;
+  color: #3e2723 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal tr:nth-child(even) {
+  background: rgba(232, 220, 200, 0.3) !important;
+}
+
+/* Sky Theme - Blue color scheme, no orange */
+.bn-presentation-modal[data-theme="sky"] .reveal {
+  background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 50%, #81d4fa 100%) !important;
+  font-family: 'Montserrat', 'Avenir', 'Century Gothic', sans-serif !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal .slides section {
+  background: transparent !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal h1,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-heading[class*="level-1"],
+.bn-presentation-modal[data-theme="sky"] .reveal h1.bn-heading {
+  color: #004d40 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal h2,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-heading[class*="level-2"],
+.bn-presentation-modal[data-theme="sky"] .reveal h2.bn-heading {
+  color: #006064 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal h3,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-heading[class*="level-3"],
+.bn-presentation-modal[data-theme="sky"] .reveal h3.bn-heading {
+  color: #00838f !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal h4,
+.bn-presentation-modal[data-theme="sky"] .reveal h5,
+.bn-presentation-modal[data-theme="sky"] .reveal h6 {
+  color: #0097a7 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal p,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-paragraph {
+  color: #01579b !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal ul li,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-list li,
+.bn-presentation-modal[data-theme="sky"] .reveal li.bn-list-item {
+  color: #01579b !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal strong {
+  color: #004d40 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal em {
+  color: #006064 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal ul li::before,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-list:not(.bn-numbered-list) li::before,
+.bn-presentation-modal[data-theme="sky"] .reveal li.bn-list-item:not(.bn-numbered)::before {
+  color: #0097a7 !important;
+  content: '▸' !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal ol li::before,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-list.bn-numbered-list li::before,
+.bn-presentation-modal[data-theme="sky"] .reveal li.bn-numbered::before {
+  color: #0097a7 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal a {
+  color: #006064 !important;
+  border-bottom-color: #00acc1 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal a:hover {
+  color: #004d40 !important;
+  border-bottom-color: #00838f !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal pre,
+.bn-presentation-modal[data-theme="sky"] .reveal .bn-code-block {
+  background: #263238 !important;
+  color: #80deea !important;
+  border-color: #4fc3f7 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal code {
+  background: #263238 !important;
+  color: #26c6da !important;
+  border-color: #4fc3f7 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal blockquote {
+  border-left-color: #00acc1 !important;
+  color: #004d40 !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal table,
+.bn-presentation-modal[data-theme="sky"] .reveal th,
+.bn-presentation-modal[data-theme="sky"] .reveal td {
+  border-color: #4fc3f7 !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal th {
+  background: #00acc1 !important;
+  color: #ffffff !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal tr:hover {
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+
+
+/* Black Theme - Distinct modern sans-serif */
+.bn-presentation-modal[data-theme="black"] .reveal,
+.bn-presentation-modal[data-theme="black"] .reveal p,
+.bn-presentation-modal[data-theme="black"] .reveal li,
+.bn-presentation-modal[data-theme="black"] .reveal ul,
+.bn-presentation-modal[data-theme="black"] .reveal ol {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', 'Roboto', sans-serif !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal h1,
+.bn-presentation-modal[data-theme="black"] .reveal h2,
+.bn-presentation-modal[data-theme="black"] .reveal h3,
+.bn-presentation-modal[data-theme="black"] .reveal h4,
+.bn-presentation-modal[data-theme="black"] .reveal h5,
+.bn-presentation-modal[data-theme="black"] .reveal h6 {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', 'Roboto', sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Sky Theme - Rounded geometric sans-serif */
+.bn-presentation-modal[data-theme="sky"] .reveal,
+.bn-presentation-modal[data-theme="sky"] .reveal p,
+.bn-presentation-modal[data-theme="sky"] .reveal li,
+.bn-presentation-modal[data-theme="sky"] .reveal ul,
+.bn-presentation-modal[data-theme="sky"] .reveal ol {
+  font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', 'Century Gothic', sans-serif !important;
+  letter-spacing: 0.01em !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal h1,
+.bn-presentation-modal[data-theme="sky"] .reveal h2,
+.bn-presentation-modal[data-theme="sky"] .reveal h3,
+.bn-presentation-modal[data-theme="sky"] .reveal h4,
+.bn-presentation-modal[data-theme="sky"] .reveal h5,
+.bn-presentation-modal[data-theme="sky"] .reveal h6 {
+  font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', 'Century Gothic', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}

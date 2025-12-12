@@ -1,6 +1,6 @@
 {
   "name": "blocknote-layout",
-  "description": "Layout and utility extensions for BlockNote editor - Python code execution.",
+  "description": "Layout and utility extensions for BlockNote editor - Python code execution and slideshow presentations.",
   "keywords": [
     "blocknote",
     "editor",
@@ -8,11 +8,14 @@
     "code-runner",
     "python",
     "pyodide",
+    "slideshow",
+    "presentation",
+    "revealjs",
     "react"
   ],
   "version": "1.0.0",
   "license": "SEE LICENSE IN LICENSE",
-  "author": "Yash Gupta <https://github.com/gyash1512>, Harshpreet Singh <https://github.com/harshpreet931>",
+  "author": "Yash Gupta <https://github.com/gyash1512>, Harshpreet Singh <https://github.com/harshpreet931>, Satvik Batra <https://github.com/satvikbatra>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gyash1512/blocknote-layout.git"
@@ -32,6 +35,10 @@
     "./coderunner": {
       "types": "./dist/coderunner/main.d.ts",
       "import": "./dist/coderunner/main.js"
+    },
+    "./slideshow": {
+      "types": "./dist/slideshow/main.d.ts",
+      "import": "./dist/slideshow/main.js"
     }
   },
   "files": [
@@ -67,7 +74,8 @@
     "@codemirror/lang-rust": "^6.0.2",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.39.2",
-    "pyodide": "^0.29.0"
+    "pyodide": "^0.29.0",
+    "reveal.js": "^5.1.0"
   },
   "devDependencies": {
     "@blocknote/core": "^0.42.3",
@@ -77,6 +85,7 @@
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.1",
     "@types/react-dom": "^19.1.1",
+    "@types/reveal.js": "^5.2.2",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "@uiw/react-codemirror": "^4.21.0",
