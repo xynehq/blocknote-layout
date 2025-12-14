@@ -4,288 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { PresentationModal } from './PresentationModal';
 import '../styles/slideshow.css';
 
+// Maximum blocks per slide before forcing a split (safety net)
+const MAX_BLOCKS_PER_SLIDE = 15;
+
 const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
   const [showPresentation, setShowPresentation] = useState(false);
   const [slideCount, setSlideCount] = useState(0);
   const [allSlides, setAllSlides] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState(node.attrs.theme || 'white');
 
-  const updatePreview = () => {
-    
-    const slides = splitIntoSlides();
-    setSlideCount(slides.length);
-    
-    // Get the editor's DOM container
-    const editorContainer = editor.view.dom;
-    const htmlSlides: string[] = [];
-    
-    // Get all block containers from the editor DOM
-    // BlockNote uses .bn-block-outer wrapper divs
-    const allBlockElements = Array.from(editorContainer.querySelectorAll('.bn-block-outer'));
-    
-    // Build a map of blocks by traversing the document in the same order
-    const blockMap = new Map<any, HTMLElement>();
-    let blockIndex = 0;
-    
-    editor.state.doc.descendants((node: any) => {
-      if (node.type.name === 'blockContainer' && blockIndex < allBlockElements.length) {
-        const domElement = allBlockElements[blockIndex] as HTMLElement;
-        if (domElement) {
-          blockMap.set(node, domElement);
-        }
-        blockIndex++;
-      }
-    });
-    
-    
-    // For each slide, try to clone the actual DOM elements
-    slides.forEach((slideBlocks, slideIndex) => {
-      const slideDiv = document.createElement('div');
-      slideDiv.className = 'bn-slide-content';
-      
-      let clonedCount = 0;
-      let fallbackCount = 0;
-      
-      slideBlocks.forEach((block: any) => {
-        let foundDomElement = false;
-        
-        // Try to find the DOM element for this block by matching content
-        for (const [docNode, domElement] of blockMap.entries()) {
-          if (docNode.firstChild && docNode.firstChild.type.name === block.type) {
-            // Simple content matching - check if text content matches
-            const docText = extractText(extractInlineContent(docNode.firstChild.content));
-            const blockText = extractText(block.content);
-            
-            if (docText === blockText || (docText.includes(blockText) && blockText.length > 5)) {
-              // Clone the DOM element
-              const clonedBlock = domElement.cloneNode(true) as HTMLElement;
-              
-              // Clean up interactive elements and contenteditable
-              clonedBlock.removeAttribute('contenteditable');
-              clonedBlock.querySelectorAll('[contenteditable]').forEach(el => {
-                el.removeAttribute('contenteditable');
-              });
-              
-              // Remove block handles and other UI elements
-              clonedBlock.querySelectorAll('.bn-block-handle, .bn-add-block-button').forEach(el => {
-                el.remove();
-              });
-              
-              slideDiv.appendChild(clonedBlock);
-              foundDomElement = true;
-              clonedCount++;
-              
-              // Remove from map so we don't match it again
-              blockMap.delete(docNode);
-              break;
-            }
-          }
-        }
-        
-        // Fallback: render using our custom function if no DOM match found
-        if (!foundDomElement) {
-          const html = renderBlock(block);
-          if (html) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            if (tempDiv.firstChild) {
-              slideDiv.appendChild(tempDiv.firstChild);
-            } else {
-              slideDiv.innerHTML += html;
-            }
-            fallbackCount++;
-          }
-        }
-      });
-      
-      if (slideIndex === 0) {
-      }
-      
-      htmlSlides.push(slideDiv.innerHTML || '<p>Empty slide</p>');
-    });
-    
-    if (htmlSlides[0]) {
-    }
-    setAllSlides(htmlSlides);
-    
-  };
-
-  useEffect(() => {
-    updatePreview();
-  }, [node.attrs.canvasId]);
-
-  // Sync dropdown state with node attributes when they change
-  useEffect(() => {
-    if (node.attrs.theme && node.attrs.theme !== selectedTheme) {
-      setSelectedTheme(node.attrs.theme);
-    }
-  }, [node.attrs.theme]);
-
-  const handleGenerateSlides = () => {
-    updatePreview();
-    setShowPresentation(true);
-  };
-
-  const handleClosePresentation = () => {
-    setShowPresentation(false);
-  };
-
-  const getBlockWeight = (block: any): number => {
-    if (block.type === 'heading') {
-      const level = block.props?.level || 1;
-      return level === 1 ? 1.5 : 1.2;
-    }
-    if (block.type === 'paragraph') {
-      const textLength = extractText(block.content).length;
-      return textLength > 100 ? 2 : 1;
-    }
-    if (block.type === 'bulletListItem' || block.type === 'numberedListItem') {
-      return 0.5;
-    }
-    if (block.type === 'codeBlock') return 3;
-    if (block.type === 'table') return 2.5;
-    if (block.type === 'image') return 2;
-    return 1;
-  };
-
-  const splitByWeight = (blocks: any[]): any[][] => {
-    const MAX_WEIGHT_PER_SLIDE = 20;
-    const slides: any[][] = [];
-    let currentSlide: any[] = [];
-    let currentWeight = 0;
-
-    blocks.forEach((block: any) => {
-      const blockWeight = getBlockWeight(block);
-      if (currentWeight + blockWeight > MAX_WEIGHT_PER_SLIDE && currentSlide.length > 0) {
-        slides.push([...currentSlide]);
-        currentSlide = [block];
-        currentWeight = blockWeight;
-      } else {
-        currentSlide.push(block);
-        currentWeight += blockWeight;
-      }
-    });
-    
-    if (currentSlide.length > 0) slides.push(currentSlide);
-    return slides;
-  };
-
-  const splitIntoSlides = () => {
-    const docContent: any[] = [];
-    editor.state.doc.descendants((node: any) => {
-      if (node.type.name === 'blockContainer') {
-        if (node.firstChild) {
-          const blockNode = node.firstChild;
-          const attrs = { ...blockNode.attrs };
-          let blockData: any = {
-            type: blockNode.type.name,
-            props: attrs,
-            content: extractInlineContent(blockNode.content),
-            children: []
-          };
-          if (blockNode.type.name === 'table') {
-            blockData = extractTableContent(blockNode);
-            blockData.props = attrs;
-          }
-          docContent.push(blockData);
-        }
-      }
-    });
-    
-    const allBlocks = docContent.filter((b: any) => b.type !== 'slideshow');
-
-    // Step 1: Check if there are any ---, ***, or — markers
-    const hasHR = allBlocks.some((block: any) => 
-      block.type === 'paragraph' && block.content.length === 1 && 
-      (block.content[0]?.text?.trim() === '---' || 
-       block.content[0]?.text?.trim() === '—' ||
-       block.content[0]?.text?.trim() === '***')
-    );
-
-    if (hasHR) {
-      // Split by --- markers into sections
-      const hrSections: any[][] = [];
-      let currentHRSection: any[] = [];
-
-      allBlocks.forEach((block: any) => {
-        const isHR = block.type === 'paragraph' && block.content.length === 1 && 
-                     (block.content[0]?.text?.trim() === '---' || 
-                      block.content[0]?.text?.trim() === '—' ||
-                      block.content[0]?.text?.trim() === '***');
-        if (isHR) {
-          if (currentHRSection.length > 0) {
-            hrSections.push([...currentHRSection]);
-            currentHRSection = [];
-          }
-        } else {
-          currentHRSection.push(block);
-        }
-      });
-      
-      if (currentHRSection.length > 0) hrSections.push(currentHRSection);
-      
-      // Now apply heading/weight splitting to each --- section
-      const finalSlides: any[][] = [];
-      hrSections.forEach((section) => {
-        const sectionSlides = splitByHeadings(section);
-        finalSlides.push(...sectionSlides);
-      });
-      
-      return finalSlides.length > 0 ? finalSlides : [[{ type: 'paragraph', content: [{ type: 'text', text: 'Empty Canvas' }] }]];
-    }
-
-    // Step 2: No --- found, split by headings then weight
-    return splitByHeadings(allBlocks);
-  };
-
-  const splitByHeadings = (blocks: any[]): any[][] => {
-    const MAX_WEIGHT_PER_SLIDE = 20;
-    const hasH1OrH2 = blocks.some((block: any) => 
-      block.type === 'heading' && (block.props?.level === 1 || block.props?.level === 2)
-    );
-
-    if (!hasH1OrH2) {
-      return splitByWeight(blocks);
-    }
-
-    const sections: any[][] = [];
-    let currentSection: any[] = [];
-    let seenFirstHeading = false;
-
-    blocks.forEach((block: any) => {
-      const isH1orH2 = block.type === 'heading' && (block.props?.level === 1 || block.props?.level === 2);
-      
-      if (isH1orH2) {
-        if (seenFirstHeading && currentSection.length > 0) {
-          sections.push([...currentSection]);
-          currentSection = [block];
-        } else {
-          currentSection.push(block);
-          seenFirstHeading = true;
-        }
-      } else {
-        currentSection.push(block);
-      }
-    });
-    
-    if (currentSection.length > 0) sections.push(currentSection);
-
-    // Split each section by weight if needed, but be more lenient with first section
-    const finalSlides: any[][] = [];
-    sections.forEach((section, sectionIndex) => {
-      const sectionWeight = section.reduce((sum, block) => sum + getBlockWeight(block), 0);
-      const weightThreshold = sectionIndex === 0 ? MAX_WEIGHT_PER_SLIDE * 1.5 : MAX_WEIGHT_PER_SLIDE;
-      
-      if (sectionWeight > weightThreshold) {
-        finalSlides.push(...splitByWeight(section));
-      } else {
-        finalSlides.push(section);
-      }
-    });
-
-    return finalSlides;
-  };
-
+  // Extract text content from inline content
   const extractText = (content: any[]): string => {
     if (!content) return '';
     return content.map((item: any) => {
@@ -296,47 +24,193 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
     }).join('');
   };
 
-  const renderInlineContent = (content: any[]): string => {
-    if (!content) return '';
-    return content.map((item: any) => {
-      if (typeof item === 'string') return item;
-      if (item.type === 'text') {
-        let text = item.text || '';
-        const styles = item.styles || {};
-        if (styles.bold) text = `<strong>${text}</strong>`;
-        if (styles.italic) text = `<em>${text}</em>`;
-        if (styles.underline) text = `<u>${text}</u>`;
-        if (styles.strike) text = `<s>${text}</s>`;
-        if (styles.code) text = `<code class="bn-inline-code">${text}</code>`;
-        if (item.styles?.textColor) text = `<span style="color: ${item.styles.textColor}">${text}</span>`;
-        if (item.styles?.backgroundColor) text = `<span style="background-color: ${item.styles.backgroundColor}">${text}</span>`;
-        return text;
+  // Check if a block is a manual separator (---, ***, ___, or divider block)
+  const isManualSeparator = (block: any): boolean => {
+    if (block.type === 'horizontalRule' || block.type === 'divider') {
+      return true;
+    }
+    if (block.type === 'paragraph') {
+      const text = extractText(block.content).trim();
+      return text === '---' || text === '***' || text === '—' || text === '___' || text === '- - -';
+    }
+    return false;
+  };
+
+  // Get heading level (0 if not a heading)
+  const getHeadingLevel = (block: any): number => {
+    if (block.type !== 'heading') return 0;
+    return block.props?.level || 1;
+  };
+
+  // Check if H2s are nested under H1s
+  const hasNestedStructure = (blocks: any[]): boolean => {
+    let foundH1 = false;
+    for (const block of blocks) {
+      const level = getHeadingLevel(block);
+      if (level === 1) foundH1 = true;
+      if (level === 2 && !foundH1) return false;
+    }
+    return foundH1 && blocks.some(b => getHeadingLevel(b) === 2);
+  };
+
+  // STEP 1: Split by --- markers (ALWAYS first)
+  const splitByMarkers = (blocks: any[]): any[][] => {
+    const sections: any[][] = [];
+    let current: any[] = [];
+
+    for (const block of blocks) {
+      if (isManualSeparator(block)) {
+        if (current.length > 0) {
+          sections.push(current);
+          current = [];
+        }
+      } else {
+        current.push(block);
       }
-      if (item.type === 'link') {
-        const linkText = renderInlineContent(item.content || []);
-        return `<a href="${item.href}" target="_blank" rel="noopener noreferrer">${linkText}</a>`;
+    }
+    if (current.length > 0) sections.push(current);
+    return sections.length > 0 ? sections : [blocks];
+  };
+
+  // STEP 2: Split by headings (H1 or H2)
+  const splitByHeadings = (blocks: any[]): any[][] => {
+    const hasH1 = blocks.some(b => getHeadingLevel(b) === 1);
+    const hasH2 = blocks.some(b => getHeadingLevel(b) === 2);
+    
+    if (!hasH1 && !hasH2) return [blocks]; // No headings, keep as one
+    
+    const nested = hasNestedStructure(blocks);
+    const sections: any[][] = [];
+    let current: any[] = [];
+    let firstH2UnderCurrentH1 = true;
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const level = getHeadingLevel(block);
+
+      if (nested) {
+        // Nested: H1 starts slide, first H2 stays, rest of H2s start new slides
+        if (level === 1) {
+          if (current.length > 0) sections.push(current);
+          current = [block];
+          firstH2UnderCurrentH1 = true;
+        } else if (level === 2) {
+          if (firstH2UnderCurrentH1) {
+            current.push(block);
+            firstH2UnderCurrentH1 = false;
+          } else {
+            if (current.length > 0) sections.push(current);
+            current = [block];
+          }
+        } else {
+          current.push(block);
+        }
+      } else {
+        // Flat: split on H1 if exists, else on H2
+        const splitLevel = hasH1 ? 1 : 2;
+        if (level === splitLevel && i > 0) {
+          if (current.length > 0) sections.push(current);
+          current = [block];
+        } else {
+          current.push(block);
+        }
       }
-      return '';
-    }).join('');
+    }
+    if (current.length > 0) sections.push(current);
+    return sections.length > 0 ? sections : [blocks];
+  };
+
+  // STEP 3: Split very long sections by block count (safety net)
+  const splitLongSection = (blocks: any[]): any[][] => {
+    if (blocks.length <= MAX_BLOCKS_PER_SLIDE) return [blocks];
+    
+    const slides: any[][] = [];
+    let current: any[] = [];
+    
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      current.push(block);
+      
+      if (current.length >= MAX_BLOCKS_PER_SLIDE) {
+        const nextBlock = blocks[i + 1];
+        const isGoodBreak = !nextBlock || 
+          getHeadingLevel(nextBlock) > 0 || 
+          (block.type !== 'bulletListItem' && block.type !== 'numberedListItem');
+        
+        if (isGoodBreak) {
+          slides.push(current);
+          current = [];
+        }
+      }
+    }
+    if (current.length > 0) slides.push(current);
+    return slides;
+  };
+
+  // Main splitting function - cascading logic
+  const splitIntoSlides = (): any[][] => {
+    const docContent: any[] = [];
+    
+    editor.state.doc.descendants((node: any) => {
+      if (node.type.name === 'blockContainer' && node.firstChild) {
+        const blockNode = node.firstChild;
+        const attrs = { ...blockNode.attrs };
+        let blockData: any = {
+          type: blockNode.type.name,
+          props: attrs,
+          content: extractInlineContent(blockNode.content),
+          children: []
+        };
+        if (blockNode.type.name === 'table') {
+          blockData = extractTableContent(blockNode);
+          blockData.props = attrs;
+        }
+        docContent.push(blockData);
+      }
+    });
+
+    const allBlocks = docContent.filter((b: any) => b.type !== 'slideshow');
+    if (allBlocks.length === 0) {
+      return [[{ type: 'paragraph', content: [{ type: 'text', text: 'Empty Canvas' }] }]];
+    }
+
+    // STEP 1: Split by --- markers first (ALWAYS)
+    const markerSections = splitByMarkers(allBlocks);
+
+    // STEP 2 & 3: For each section, apply heading split if too long, then block count split
+    const finalSlides: any[][] = [];
+    
+    for (const section of markerSections) {
+      if (section.length === 0) continue;
+      
+      // If section is too long, try splitting by headings first
+      if (section.length > MAX_BLOCKS_PER_SLIDE) {
+        const headingSections = splitByHeadings(section);
+        
+        // For each heading section, split by block count if still too long
+        for (const headingSection of headingSections) {
+          if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
+            const blockSections = splitLongSection(headingSection);
+            finalSlides.push(...blockSections);
+          } else {
+            finalSlides.push(headingSection);
+          }
+        }
+      } else {
+        // Section is small enough, keep as is
+        finalSlides.push(section);
+      }
+    }
+
+    return finalSlides.length > 0 ? finalSlides : [[{ type: 'paragraph', content: [{ type: 'text', text: 'Empty Canvas' }] }]];
   };
 
   const extractInlineContent = (content: any): any[] => {
     if (!content) return [];
-    
-    // Handle ProseMirror Fragment
     const nodes: any[] = [];
     if (content.content) {
-      // It's a Fragment or Node with content
-      if (Array.isArray(content.content)) {
-        content.content.forEach((node: any) => nodes.push(node));
-      } else {
-        // It's a Fragment object, iterate it
-        content.content.forEach((node: any) => nodes.push(node));
-      }
-    } else {
-      return [];
+      content.content.forEach((node: any) => nodes.push(node));
     }
-    
     return nodes.map((node: any) => {
       if (node.type.name === 'text') {
         const styles: any = {};
@@ -347,12 +221,8 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
             if (mark.type.name === 'underline') styles.underline = true;
             if (mark.type.name === 'strike') styles.strike = true;
             if (mark.type.name === 'code') styles.code = true;
-            if (mark.type.name === 'textStyle') {
-              if (mark.attrs.color) styles.textColor = mark.attrs.color;
-            }
-            if (mark.type.name === 'backgroundColor') {
-              styles.backgroundColor = mark.attrs.backgroundColor;
-            }
+            if (mark.type.name === 'textStyle' && mark.attrs.color) styles.textColor = mark.attrs.color;
+            if (mark.type.name === 'backgroundColor') styles.backgroundColor = mark.attrs.backgroundColor;
             if (mark.type.name === 'link') {
               return { type: 'link', href: mark.attrs.href, content: [{ type: 'text', text: node.text, styles }] };
             }
@@ -369,68 +239,71 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
     tableNode.content.forEach((row: any) => {
       const cells: any[] = [];
       row.content.forEach((cell: any) => {
-        cells.push({
-          content: extractInlineContent(cell.content.firstChild)
-        });
+        cells.push({ content: extractInlineContent(cell.content.firstChild) });
       });
       rows.push({ cells });
     });
     return { type: 'table', rows };
   };
 
+  const renderInlineContent = (content: any[]): string => {
+    if (!content) return '';
+    return content.map((item: any) => {
+      if (typeof item === 'string') return item;
+      if (item.type === 'text') {
+        let text = item.text || '';
+        const styles = item.styles || {};
+        if (styles.bold) text = `<strong>${text}</strong>`;
+        if (styles.italic) text = `<em>${text}</em>`;
+        if (styles.underline) text = `<u>${text}</u>`;
+        if (styles.strike) text = `<s>${text}</s>`;
+        if (styles.code) text = `<code class="bn-inline-code">${text}</code>`;
+        if (styles.textColor) text = `<span style="color: ${styles.textColor}">${text}</span>`;
+        if (styles.backgroundColor) text = `<span style="background-color: ${styles.backgroundColor}">${text}</span>`;
+        return text;
+      }
+      if (item.type === 'link') {
+        return `<a href="${item.href}" target="_blank">${renderInlineContent(item.content || [])}</a>`;
+      }
+      return '';
+    }).join('');
+  };
+
   const renderBlock = (block: any): string => {
     if (block.type === 'heading') {
       const level = block.props?.level || 1;
-      const content = renderInlineContent(block.content);
-      return `<h${level} class="bn-heading">${content}</h${level}>`;
+      return `<h${level} class="bn-heading">${renderInlineContent(block.content)}</h${level}>`;
     }
-    
     if (block.type === 'paragraph') {
-      const content = renderInlineContent(block.content);
-      return `<p class="bn-paragraph">${content}</p>`;
+      return `<p class="bn-paragraph">${renderInlineContent(block.content)}</p>`;
     }
-    
     if (block.type === 'bulletListItem') {
-      const content = renderInlineContent(block.content);
-      return `<li class="bn-list-item">${content}</li>`;
+      return `<li class="bn-list-item">${renderInlineContent(block.content)}</li>`;
     }
-    
     if (block.type === 'numberedListItem') {
-      const content = renderInlineContent(block.content);
-      return `<li class="bn-list-item bn-numbered">${content}</li>`;
+      return `<li class="bn-list-item bn-numbered">${renderInlineContent(block.content)}</li>`;
     }
-    
     if (block.type === 'codeBlock') {
-      const code = extractText(block.content);
-      const language = block.props?.language || '';
-      return `<pre class="bn-code-block"><code class="language-${language}">${code}</code></pre>`;
+      const lang = block.props?.language || '';
+      return `<pre class="bn-code-block"><code class="language-${lang}">${extractText(block.content)}</code></pre>`;
     }
-    
-    if (block.type === 'table') {
-      let tableHTML = '<table class="bn-table"><tbody>';
+    if (block.type === 'table' && block.rows) {
+      let html = '<table class="bn-table"><tbody>';
       block.rows.forEach((row: any) => {
-        tableHTML += '<tr>';
+        html += '<tr>';
         row.cells.forEach((cell: any) => {
-          const cellContent = renderInlineContent(cell.content);
-          tableHTML += `<td>${cellContent}</td>`;
+          html += `<td>${renderInlineContent(cell.content)}</td>`;
         });
-        tableHTML += '</tr>';
+        html += '</tr>';
       });
-      tableHTML += '</tbody></table>';
-      return tableHTML;
+      return html + '</tbody></table>';
     }
-    
     if (block.type === 'quote') {
-      const content = renderInlineContent(block.content);
-      return `<blockquote class="bn-quote">${content}</blockquote>`;
+      return `<blockquote class="bn-quote">${renderInlineContent(block.content)}</blockquote>`;
     }
-    
     if (block.type === 'image') {
-      const src = block.props?.url || '';
-      const alt = block.props?.caption || '';
-      return `<img src="${src}" alt="${alt}" class="bn-image" />`;
+      return `<img src="${block.props?.url || ''}" alt="${block.props?.caption || ''}" class="bn-image" />`;
     }
-    
     return '';
   };
 
@@ -460,24 +333,76 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
         if (inList) {
           html += listType === 'ol' ? '</ol>' : '</ul>';
           inList = false;
-          listType = '';
         }
         html += renderBlock(block);
       }
     });
-
-    if (inList) {
-      html += listType === 'ol' ? '</ol>' : '</ul>';
-    }
-
+    if (inList) html += listType === 'ol' ? '</ol>' : '</ul>';
     return html;
   };
 
-  const generateSlidesHTML = (): string[] => {
+  const updatePreview = () => {
     const slides = splitIntoSlides();
-    return slides.map(slide => renderSlide(slide));
+    setSlideCount(slides.length);
+    
+    const editorContainer = editor.view.dom;
+    const allBlockElements = Array.from(editorContainer.querySelectorAll('.bn-block-outer'));
+    const blockMap = new Map<any, HTMLElement>();
+    let blockIndex = 0;
+    
+    editor.state.doc.descendants((node: any) => {
+      if (node.type.name === 'blockContainer' && blockIndex < allBlockElements.length) {
+        blockMap.set(node, allBlockElements[blockIndex] as HTMLElement);
+        blockIndex++;
+      }
+    });
+    
+    const htmlSlides = slides.map((slideBlocks) => {
+      const slideDiv = document.createElement('div');
+      slideDiv.className = 'bn-slide-content';
+      
+      slideBlocks.forEach((block: any) => {
+        let found = false;
+        for (const [docNode, domElement] of blockMap.entries()) {
+          if (docNode.firstChild?.type.name === block.type) {
+            const docText = extractText(extractInlineContent(docNode.firstChild.content));
+            const blockText = extractText(block.content);
+            if (docText === blockText || (docText.includes(blockText) && blockText.length > 5)) {
+              const clone = domElement.cloneNode(true) as HTMLElement;
+              clone.removeAttribute('contenteditable');
+              clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+              clone.querySelectorAll('.bn-block-handle, .bn-add-block-button').forEach(el => el.remove());
+              slideDiv.appendChild(clone);
+              blockMap.delete(docNode);
+              found = true;
+              break;
+            }
+          }
+        }
+        if (!found) {
+          const html = renderBlock(block);
+          if (html) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            if (temp.firstChild) slideDiv.appendChild(temp.firstChild);
+          }
+        }
+      });
+      return slideDiv.innerHTML || '<p>Empty slide</p>';
+    });
+    
+    setAllSlides(htmlSlides);
   };
 
+  useEffect(() => {
+    updatePreview();
+  }, [node.attrs.canvasId]);
+
+  useEffect(() => {
+    if (node.attrs.theme && node.attrs.theme !== selectedTheme) {
+      setSelectedTheme(node.attrs.theme);
+    }
+  }, [node.attrs.theme]);
 
   return (
     <NodeViewWrapper>
@@ -485,9 +410,7 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
         <div className="bn-slideshow-header">
           <div className="bn-slideshow-title">
             Slideshow
-            {slideCount > 0 && (
-              <span className="bn-slide-count">({slideCount} slides)</span>
-            )}
+            {slideCount > 0 && <span className="bn-slide-count">({slideCount} slides)</span>}
           </div>
           <div className="bn-slideshow-actions">
             <select 
@@ -503,10 +426,7 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
               <option value="beige">Beige</option>
               <option value="sky">Sky</option>
             </select>
-            <button 
-              onClick={handleGenerateSlides}
-              className="bn-slideshow-btn"
-            >
+            <button onClick={() => { updatePreview(); setShowPresentation(true); }} className="bn-slideshow-btn">
               ▶ Present
             </button>
           </div>
@@ -514,8 +434,8 @@ const SlideshowNodeView: React.FC<NodeViewProps> = ({ node, editor }) => {
         {showPresentation && (
           <PresentationModal
             theme={selectedTheme} 
-            slides={allSlides.length > 0 ? allSlides : generateSlidesHTML()}
-            onClose={handleClosePresentation}
+            slides={allSlides.length > 0 ? allSlides : splitIntoSlides().map(s => renderSlide(s))}
+            onClose={() => setShowPresentation(false)}
           />
         )}
       </div>
@@ -531,21 +451,13 @@ export const SlideshowNode = Node.create({
   
   addAttributes() {
     return {
-      canvasId: {
-        default: null,
-      },
-      theme: {
-        default: 'white',
-      },
+      canvasId: { default: null },
+      theme: { default: 'white' },
     };
   },
 
   parseHTML() {
-    return [
-      {
-        tag: 'div[data-type="slideshow"]',
-      },
-    ];
+    return [{ tag: 'div[data-type="slideshow"]' }];
   },
 
   renderHTML({ HTMLAttributes }) {
