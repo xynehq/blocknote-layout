@@ -20,6 +20,7 @@ const externalPackages = [
     "react-icons/md",
     "react-icons/tb",
     "react-icons/vsc",
+    "react-icons/fa",
     "pyodide",
 ];
 
