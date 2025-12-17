@@ -13,9 +13,14 @@
     "revealjs",
     "react"
   ],
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "SEE LICENSE IN LICENSE",
-  "author": "Yash Gupta <https://github.com/gyash1512>, Harshpreet Singh <https://github.com/harshpreet931>, Satvik Batra <https://github.com/satvikbatra>",
+  "author": "Yash Gupta",
+  "contributors": [
+    "Yash Gupta <https://github.com/gyash1512>",
+    "Harshpreet Singh <https://github.com/harshpreet931>",
+    "Satvik Batra <https://github.com/satvikbatra>"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gyash1512/blocknote-layout.git"
