@@ -14,6 +14,27 @@ const extractText = (content: any[]): string => {
   }).join('');
 };
 
+// Check if a block is empty (has no meaningful content)
+const isEmptyBlock = (block: any): boolean => {
+  // Check if it's a paragraph with no content or only whitespace
+  if (block.type === 'paragraph') {
+    const text = extractText(block.content).trim();
+    return text === '';
+  }
+  // Empty list items
+  if (block.type === 'bulletListItem' || block.type === 'numberedListItem') {
+    const text = extractText(block.content).trim();
+    return text === '';
+  }
+  return false;
+};
+
+// Check if a slide (array of blocks) contains only empty blocks
+const isEmptySlide = (blocks: any[]): boolean => {
+  if (blocks.length === 0) return true;
+  return blocks.every(block => isEmptyBlock(block));
+};
+
 // Check if a block is a manual separator (---, ***, ___, or divider block)
 const isManualSeparator = (block: any): boolean => {
   if (block.type === 'horizontalRule' || block.type === 'divider') {
@@ -66,9 +87,9 @@ const splitByMarkers = (blocks: any[]): any[][] => {
 const splitByHeadings = (blocks: any[]): any[][] => {
   const hasH1 = blocks.some(b => getHeadingLevel(b) === 1);
   const hasH2 = blocks.some(b => getHeadingLevel(b) === 2);
-  
+
   if (!hasH1 && !hasH2) return [blocks];
-  
+
   const nested = hasNestedStructure(blocks);
   const sections: any[][] = [];
   let current: any[] = [];
@@ -111,20 +132,20 @@ const splitByHeadings = (blocks: any[]): any[][] => {
 // STEP 3: Split very long sections by block count (safety net)
 const splitLongSection = (blocks: any[]): any[][] => {
   if (blocks.length <= MAX_BLOCKS_PER_SLIDE) return [blocks];
-  
+
   const slides: any[][] = [];
   let current: any[] = [];
-  
+
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     current.push(block);
-    
+
     if (current.length >= MAX_BLOCKS_PER_SLIDE) {
       const nextBlock = blocks[i + 1];
-      const isGoodBreak = !nextBlock || 
-        getHeadingLevel(nextBlock) > 0 || 
+      const isGoodBreak = !nextBlock ||
+        getHeadingLevel(nextBlock) > 0 ||
         (block.type !== 'bulletListItem' && block.type !== 'numberedListItem');
-      
+
       if (isGoodBreak) {
         slides.push(current);
         current = [];
@@ -181,7 +202,7 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   // Extract block data from the document for splitting logic
   const docContent: any[] = [];
   const nodeToBlockMap = new Map<any, any>();
-  
+
   tiptapEditor.state.doc.descendants((node: any) => {
     if (node.type.name === 'blockContainer' && node.firstChild) {
       const blockNode = node.firstChild;
@@ -198,8 +219,15 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   });
 
   // Filter out slideshow blocks
-  const allBlocks = docContent.filter((b: any) => b.type !== 'slideshow');
-  
+  let allBlocks = docContent.filter((b: any) => b.type !== 'slideshow');
+
+  // Skip leading empty blocks to prevent blank first slide
+  let firstNonEmptyIndex = 0;
+  while (firstNonEmptyIndex < allBlocks.length && isEmptyBlock(allBlocks[firstNonEmptyIndex])) {
+    firstNonEmptyIndex++;
+  }
+  allBlocks = allBlocks.slice(firstNonEmptyIndex);
+
   if (allBlocks.length === 0) {
     return ['<p>Empty Canvas</p>'];
   }
@@ -207,16 +235,19 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   // Apply splitting logic
   const markerSections = splitByMarkers(allBlocks);
   const finalSlides: any[][] = [];
-  
+
   for (const section of markerSections) {
-    if (section.length === 0) continue;
-    
+    if (section.length === 0 || isEmptySlide(section)) continue;
+
     if (section.length > MAX_BLOCKS_PER_SLIDE) {
       const headingSections = splitByHeadings(section);
       for (const headingSection of headingSections) {
+        if (isEmptySlide(headingSection)) continue; // Skip empty slides
+
         if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
           const blockSections = splitLongSection(headingSection);
-          finalSlides.push(...blockSections);
+          // Filter out any empty slides from block sections
+          finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
         } else {
           finalSlides.push(headingSection);
         }
@@ -233,11 +264,11 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   // Get all DOM block elements from the editor
   const editorContainer = tiptapEditor.view.dom;
   const allBlockElements = Array.from(editorContainer.querySelectorAll('.bn-block-outer')) as HTMLElement[];
-  
+
   // Map ProseMirror nodes to DOM elements
   const blockDomMap = new Map<any, HTMLElement>();
   let blockIndex = 0;
-  
+
   tiptapEditor.state.doc.descendants((node: any) => {
     if (node.type.name === 'blockContainer' && blockIndex < allBlockElements.length) {
       blockDomMap.set(node, allBlockElements[blockIndex]);
@@ -249,24 +280,24 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   const htmlSlides = finalSlides.map((slideBlocks) => {
     const slideDiv = document.createElement('div');
     slideDiv.className = 'bn-slide-content';
-    
+
     for (const block of slideBlocks) {
       const pmNode = nodeToBlockMap.get(block);
       const domElement = pmNode ? blockDomMap.get(pmNode) : null;
-      
+
       if (domElement) {
         // Clone the actual DOM element (preserves mermaid, columns, etc.)
         const clone = domElement.cloneNode(true) as HTMLElement;
-        
+
         // Clean up editor-specific attributes and elements
         clone.removeAttribute('contenteditable');
         clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
         clone.querySelectorAll('.bn-block-handle, .bn-add-block-button, .bn-drag-handle').forEach(el => el.remove());
-        
+
         slideDiv.appendChild(clone);
       }
     }
-    
+
     return slideDiv.innerHTML || '<p>Empty slide</p>';
   });
 
