@@ -584,6 +584,21 @@
   width: 100% !important;
 }
 
+/* Responsive Checklist items */
+.bn-presentation-modal .reveal [data-content-type="checkListItem"] .bn-block-content,
+.bn-presentation-modal .reveal [data-content-type="checkListItem"] .bn-check-list-item-wrapper {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 15px !important;
+}
+
+.bn-presentation-modal .reveal [data-content-type="checkListItem"] input[type="checkbox"] {
+  width: 1em !important;
+  height: 1em !important;
+  margin-top: 0.35em !important;
+  flex-shrink: 0 !important;
+}
+
 .bn-presentation-modal .reveal .bn-block-outer th,
 .bn-presentation-modal .reveal .bn-block-outer td {
   padding: 0.25em 0.4em !important;
@@ -615,10 +630,24 @@
 .bn-presentation-modal .reveal .slides section::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.6) !important;
 }
+
 /* Black Theme - Fixed colors */
 .bn-presentation-modal[data-theme="black"] .reveal {
   background: #0a0a0a !important;
   font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .bn-presentation-close {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .bn-presentation-close:hover {
+  background: rgba(51, 65, 85, 1) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: scale(1.05);
 }
 
 .bn-presentation-modal[data-theme="black"] .reveal .slides section {
@@ -698,6 +727,10 @@
   background: #1a1a1a !important;
   color: #ffffff !important;
   border-color: #333 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal [data-content-type="checkListItem"] input[type="checkbox"] {
+  accent-color: #00d4ff !important;
 }
 
 .bn-presentation-modal[data-theme="black"] .reveal blockquote {
@@ -1007,11 +1040,11 @@
 }
 
 /* Remove any default margins from last elements */
-.bn-presentation-modal .reveal .slides section > *:last-child {
+.bn-presentation-modal .reveal .slides section>*:last-child {
   margin-bottom: 0 !important;
 }
 
-.bn-presentation-modal .reveal .bn-container > *:last-child {
+.bn-presentation-modal .reveal .bn-container>*:last-child {
   margin-bottom: 0 !important;
 }
 
