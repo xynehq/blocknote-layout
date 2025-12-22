@@ -53,17 +53,6 @@ const getHeadingLevel = (block: any): number => {
   return block.props?.level || 1;
 };
 
-// Check if H2s are nested under H1s
-const hasNestedStructure = (blocks: any[]): boolean => {
-  let foundH1 = false;
-  for (const block of blocks) {
-    const level = getHeadingLevel(block);
-    if (level === 1) foundH1 = true;
-    if (level === 2 && !foundH1) return false;
-  }
-  return foundH1 && blocks.some(b => getHeadingLevel(b) === 2);
-};
-
 // STEP 1: Split by --- markers (ALWAYS first)
 const splitByMarkers = (blocks: any[]): any[][] => {
   const sections: any[][] = [];
@@ -83,75 +72,72 @@ const splitByMarkers = (blocks: any[]): any[][] => {
   return sections.length > 0 ? sections : [blocks];
 };
 
-// STEP 2: Split by headings (H1 or H2)
+// STEP 2: Split by headings (H1 and H2 only - H3 is treated as subheading)
 const splitByHeadings = (blocks: any[]): any[][] => {
   const hasH1 = blocks.some(b => getHeadingLevel(b) === 1);
   const hasH2 = blocks.some(b => getHeadingLevel(b) === 2);
 
-  if (!hasH1 && !hasH2) return [blocks];
+  if (!hasH1 && !hasH2) return [blocks]; // No H1/H2 headings, keep as one
 
-  const nested = hasNestedStructure(blocks);
   const sections: any[][] = [];
   let current: any[] = [];
-  let firstH2UnderCurrentH1 = true;
+
+  // Determine split level: H1 if present, otherwise H2
+  const splitLevel = hasH1 ? 1 : 2;
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     const level = getHeadingLevel(block);
 
-    if (nested) {
-      if (level === 1) {
-        if (current.length > 0) sections.push(current);
-        current = [block];
-        firstH2UnderCurrentH1 = true;
-      } else if (level === 2) {
-        if (firstH2UnderCurrentH1) {
-          current.push(block);
-          firstH2UnderCurrentH1 = false;
-        } else {
-          if (current.length > 0) sections.push(current);
-          current = [block];
-        }
-      } else {
-        current.push(block);
-      }
+    // Split on H1 or H2 (depending on splitLevel), but NOT on H3
+    if (level === splitLevel && i > 0) {
+      if (current.length > 0) sections.push(current);
+      current = [block];
     } else {
-      const splitLevel = hasH1 ? 1 : 2;
-      if (level === splitLevel && i > 0) {
-        if (current.length > 0) sections.push(current);
-        current = [block];
-      } else {
-        current.push(block);
-      }
+      current.push(block);
     }
   }
+
   if (current.length > 0) sections.push(current);
   return sections.length > 0 ? sections : [blocks];
 };
 
-// STEP 3: Split very long sections by block count (safety net)
+// STEP 3: Smart split for long sections - try to break at H3 boundaries
 const splitLongSection = (blocks: any[]): any[][] => {
   if (blocks.length <= MAX_BLOCKS_PER_SLIDE) return [blocks];
 
   const slides: any[][] = [];
   let current: any[] = [];
+  const MIN_BLOCKS_FOR_H3 = 3;
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
-    current.push(block);
+    const level = getHeadingLevel(block);
 
-    if (current.length >= MAX_BLOCKS_PER_SLIDE) {
-      const nextBlock = blocks[i + 1];
-      const isGoodBreak = !nextBlock ||
-        getHeadingLevel(nextBlock) > 0 ||
-        (block.type !== 'bulletListItem' && block.type !== 'numberedListItem');
-
-      if (isGoodBreak) {
+    if (level === 3 && current.length >= (MAX_BLOCKS_PER_SLIDE - MIN_BLOCKS_FOR_H3)) {
+      if (current.length > 0) {
         slides.push(current);
         current = [];
       }
+      current.push(block);
+    } else {
+      current.push(block);
+
+      if (current.length >= MAX_BLOCKS_PER_SLIDE) {
+        const nextBlock = blocks[i + 1];
+        const isGoodBreak = !nextBlock ||
+          getHeadingLevel(nextBlock) === 3 ||
+          getHeadingLevel(nextBlock) > 0 ||
+          (block.type !== 'bulletListItem' && block.type !== 'numberedListItem');
+
+        if (isGoodBreak) {
+          slides.push(current);
+          current = [];
+        }
+      }
     }
   }
+
   if (current.length > 0) slides.push(current);
   return slides;
 };
@@ -239,21 +225,20 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   for (const section of markerSections) {
     if (section.length === 0 || isEmptySlide(section)) continue;
 
-    if (section.length > MAX_BLOCKS_PER_SLIDE) {
-      const headingSections = splitByHeadings(section);
-      for (const headingSection of headingSections) {
-        if (isEmptySlide(headingSection)) continue; // Skip empty slides
+    // ALWAYS split by headings first (primary strategy)
+    const headingSections = splitByHeadings(section);
 
-        if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
-          const blockSections = splitLongSection(headingSection);
-          // Filter out any empty slides from block sections
-          finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
-        } else {
-          finalSlides.push(headingSection);
-        }
+    // For each heading section, split by block count if it's too long (safety net)
+    for (const headingSection of headingSections) {
+      if (isEmptySlide(headingSection)) continue; // Skip empty slides
+
+      if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
+        const blockSections = splitLongSection(headingSection);
+        // Filter out any empty slides from block sections
+        finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
+      } else {
+        finalSlides.push(headingSection);
       }
-    } else {
-      finalSlides.push(section);
     }
   }
 

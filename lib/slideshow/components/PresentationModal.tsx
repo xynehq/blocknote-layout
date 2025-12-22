@@ -79,6 +79,8 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       margin: 0.04,
       minScale: 0.2,
       maxScale: 1.5,
+      keyboard: true, // Enable keyboard navigation
+      touch: true, // Enable touch navigation
     });
 
     deck.initialize().then(() => {
@@ -86,6 +88,8 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       setTimeout(() => {
         autoScaleSlides();
       }, 100);
+    }).catch((err) => {
+      console.error('Reveal.js initialization failed:', err);
     });
     
     deckRef.current = deck;
