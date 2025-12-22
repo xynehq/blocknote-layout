@@ -11,6 +11,10 @@
     "slideshow",
     "presentation",
     "revealjs",
+    "whiteboard",
+    "drawing",
+    "canvas",
+    "diagram",
     "react"
   ],
   "version": "1.0.4",
@@ -44,6 +48,10 @@
     "./slideshow": {
       "types": "./dist/slideshow/main.d.ts",
       "import": "./dist/slideshow/main.js"
+    },
+    "./whiteboard": {
+      "types": "./dist/whiteboard/main.d.ts",
+      "import": "./dist/whiteboard/main.js"
     }
   },
   "files": [
@@ -79,6 +87,7 @@
     "@codemirror/lang-rust": "^6.0.2",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.39.2",
+    "@excalidraw/excalidraw": "^0.18.0",
     "pyodide": "^0.29.0",
     "recharts": "^3.6.0",
     "reveal.js": "^5.1.0"
