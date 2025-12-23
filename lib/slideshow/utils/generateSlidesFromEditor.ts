@@ -47,6 +47,12 @@ const isManualSeparator = (block: any): boolean => {
   return false;
 };
 
+// Check if a block is a custom block type that should get its own slide
+const isCustomBlock = (block: any): boolean => {
+  const customBlockTypes = ['whiteboard', 'mermaid'];
+  return customBlockTypes.includes(block.type);
+};
+
 // Get heading level (0 if not a heading)
 const getHeadingLevel = (block: any): number => {
   if (block.type !== 'heading') return 0;
@@ -72,7 +78,30 @@ const splitByMarkers = (blocks: any[]): any[][] => {
   return sections.length > 0 ? sections : [blocks];
 };
 
-// STEP 2: Split by headings (H1 and H2 only - H3 is treated as subheading)
+// STEP 2: Split by custom blocks (each custom block gets its own slide)
+const splitByCustomBlocks = (blocks: any[]): any[][] => {
+  const sections: any[][] = [];
+  let current: any[] = [];
+
+  for (const block of blocks) {
+    if (isCustomBlock(block)) {
+      // Push any accumulated regular blocks
+      if (current.length > 0) {
+        sections.push(current);
+        current = [];
+      }
+      // Custom block gets its own slide
+      sections.push([block]);
+    } else {
+      current.push(block);
+    }
+  }
+
+  if (current.length > 0) sections.push(current);
+  return sections.length > 0 ? sections : [blocks];
+};
+
+// STEP 3: Split by headings (H1 and H2 only - H3 is treated as subheading)
 const splitByHeadings = (blocks: any[]): any[][] => {
   const hasH1 = blocks.some(b => getHeadingLevel(b) === 1);
   const hasH2 = blocks.some(b => getHeadingLevel(b) === 2);
@@ -102,7 +131,7 @@ const splitByHeadings = (blocks: any[]): any[][] => {
   return sections.length > 0 ? sections : [blocks];
 };
 
-// STEP 3: Smart split for long sections - try to break at H3 boundaries
+// STEP 4: Smart split for long sections - try to break at H3 boundaries
 const splitLongSection = (blocks: any[]): any[][] => {
   if (blocks.length <= MAX_BLOCKS_PER_SLIDE) return [blocks];
 
@@ -225,19 +254,26 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   for (const section of markerSections) {
     if (section.length === 0 || isEmptySlide(section)) continue;
 
-    // ALWAYS split by headings first (primary strategy)
-    const headingSections = splitByHeadings(section);
+    // Split by custom blocks (each custom block gets its own slide)
+    const customBlockSections = splitByCustomBlocks(section);
 
-    // For each heading section, split by block count if it's too long (safety net)
-    for (const headingSection of headingSections) {
-      if (isEmptySlide(headingSection)) continue; // Skip empty slides
+    for (const customSection of customBlockSections) {
+      if (isEmptySlide(customSection)) continue;
 
-      if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
-        const blockSections = splitLongSection(headingSection);
-        // Filter out any empty slides from block sections
-        finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
-      } else {
-        finalSlides.push(headingSection);
+      // Split by headings (primary strategy for regular content)
+      const headingSections = splitByHeadings(customSection);
+
+      // For each heading section, split by block count if it's too long (safety net)
+      for (const headingSection of headingSections) {
+        if (isEmptySlide(headingSection)) continue; // Skip empty slides
+
+        if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
+          const blockSections = splitLongSection(headingSection);
+          // Filter out any empty slides from block sections
+          finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
+        } else {
+          finalSlides.push(headingSection);
+        }
       }
     }
   }

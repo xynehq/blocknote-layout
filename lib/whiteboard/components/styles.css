@@ -23,7 +23,7 @@
 .whiteboard-wrapper:hover {
     border-color: var(--wb-accent);
     box-shadow: 0 12px 24px -8px rgba(99, 102, 241, 0.15);
-    transform: translateY(-2px);
+    /* Removed transform to prevent cursor misalignment */
 }
 
 .whiteboard-toolbar {
@@ -153,13 +153,13 @@
 @keyframes wbModalEnter {
     from {
         opacity: 0;
-        transform: scale(1.05);
+        /* Removed transform: scale to prevent cursor misalignment */
         filter: blur(10px);
     }
 
     to {
         opacity: 1;
-        transform: scale(1);
+        /* Removed transform: scale to prevent cursor misalignment */
         filter: blur(0);
     }
 }
@@ -213,6 +213,17 @@
     flex: 1;
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+/* Ensure Excalidraw canvas fills container properly */
+.whiteboard-modal-content .excalidraw {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
 }
 
 /* THE NUCLEAR OPTION: Hide Library Button everywhere */
@@ -239,5 +250,12 @@
 @media (max-width: 768px) {
     .whiteboard-modal-breadcrumbs {
         display: none;
+    }
+
+    /* Hide Excalidraw Menu Button on Mobile */
+    .whiteboard-modal-content .App-menu_top__left,
+    .whiteboard-modal-content .App-menu__left,
+    .whiteboard-modal-content button[aria-label="Menu"] {
+        display: none !important;
     }
 }

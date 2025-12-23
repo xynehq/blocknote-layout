@@ -22,6 +22,7 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
 }) => {
   const revealRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<Reveal.Api | null>(null);
+  const scrollPositionRef = useRef<number>(0);
 
   // Auto-scale slide content to fit within the slide
   const autoScaleSlides = useCallback(() => {
@@ -118,8 +119,11 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
     };
   }, [slides, autoScaleSlides]);
 
-  // Handle Escape key and fullscreen exit
+  // Handle Escape key, fullscreen exit, and scroll position
   useEffect(() => {
+    // Save scroll position when modal opens
+    scrollPositionRef.current = window.scrollY || document.documentElement.scrollTop;
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -141,6 +145,20 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.body.style.overflow = "unset";
+      
+      // Restore scroll position when modal closes
+      // Use requestAnimationFrame and multiple attempts for reliability on mobile
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current);
+        
+        setTimeout(() => {
+          window.scrollTo(0, scrollPositionRef.current);
+          
+          setTimeout(() => {
+            window.scrollTo(0, scrollPositionRef.current);
+          }, 50);
+        }, 50);
+      });
     };
   }, [onClose]);
 
