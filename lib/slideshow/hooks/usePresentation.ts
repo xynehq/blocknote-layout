@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { BlockNoteEditor } from "@blocknote/core";
-import { generateSlidesFromBlocks } from "../utils/generateSlidesFromEditor.js";
+import { generateSlidesFromBlocks, SlideContent } from "../utils/generateSlidesFromEditor.js";
 
 export interface UsePresentationOptions {
   editor: BlockNoteEditor<any, any, any> | null;
@@ -11,12 +11,12 @@ export interface UsePresentationReturn {
   // State
   selectedTheme: string;
   showPresentation: boolean;
-  generatedSlides: string[];
-  
+  generatedSlides: SlideContent[];
+
   // Actions
   setSelectedTheme: (theme: string) => void;
   handleThemeChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
-  handlePresent: () => void;
+  handlePresent: () => Promise<void>;
   closePresentation: () => void;
 }
 
@@ -35,7 +35,7 @@ export function usePresentation({
 }: UsePresentationOptions): UsePresentationReturn {
   const [selectedTheme, setSelectedTheme] = useState<string>(defaultTheme);
   const [showPresentation, setShowPresentation] = useState(false);
-  const [generatedSlides, setGeneratedSlides] = useState<string[]>([]);
+  const [generatedSlides, setGeneratedSlides] = useState<SlideContent[]>([]);
 
   const handleThemeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>): void => {
     const newTheme = event.target.value;
@@ -68,10 +68,11 @@ export function usePresentation({
     }
   }, [editor]);
 
-  const handlePresent = useCallback((): void => {
+  const handlePresent = useCallback(async (): Promise<void> => {
     if (!editor) return;
     // Pass the editor instance so DOM elements can be cloned (preserves complex blocks)
-    const slides = generateSlidesFromBlocks(editor);
+    // This is now async to support whiteboard SVG generation
+    const slides = await generateSlidesFromBlocks(editor);
     setGeneratedSlides(slides);
     setShowPresentation(true);
   }, [editor]);

@@ -2,15 +2,14 @@ import React, { useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Reveal from "reveal.js";
 import "reveal.js/dist/reveal.css";
-import "reveal.js/dist/theme/white.css";
-import "reveal.js/dist/theme/black.css";
-import "reveal.js/dist/theme/beige.css";
-import "reveal.js/dist/theme/sky.css";
+import "../styles/slideshow.css";
 import "@blocknote/mantine/style.css";
 import { MdClose } from "react-icons/md";
+import { SlideContent } from "../utils/generateSlidesFromEditor.js";
+import { WhiteboardSlide } from "./WhiteboardSlide.js";
 
 interface PresentationModalProps {
-  slides: string[];
+  slides: SlideContent[];
   onClose: () => void;
   theme?: string;
 }
@@ -50,7 +49,7 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       // Calculate scale factors for both dimensions
       const scaleY = contentHeight > availableHeight ? availableHeight / contentHeight : 1;
       const scaleX = contentWidth > availableWidth ? availableWidth / contentWidth : 1;
-      
+
       // Use the smaller scale to fit both dimensions
       const scale = Math.min(scaleX, scaleY);
 
@@ -92,7 +91,7 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
     }).catch((err) => {
       console.error('Reveal.js initialization failed:', err);
     });
-    
+
     deckRef.current = deck;
 
     // Re-scale on slide change in case of lazy loading
@@ -145,15 +144,15 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.body.style.overflow = "unset";
-      
+
       // Restore scroll position when modal closes
       // Use requestAnimationFrame and multiple attempts for reliability on mobile
       requestAnimationFrame(() => {
         window.scrollTo(0, scrollPositionRef.current);
-        
+
         setTimeout(() => {
           window.scrollTo(0, scrollPositionRef.current);
-          
+
           setTimeout(() => {
             window.scrollTo(0, scrollPositionRef.current);
           }, 50);
@@ -161,6 +160,37 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       });
     };
   }, [onClose]);
+
+  // Render a slide based on its type
+  const renderSlide = (slide: SlideContent, index: number) => {
+    if (slide.type === 'whiteboard') {
+      return (
+        <section
+          key={index}
+          className="bn-presentation-slide bn-whiteboard-presentation-slide"
+        >
+          <WhiteboardSlide
+            data={slide.data}
+            title={slide.title}
+            theme={theme}
+          />
+        </section>
+      );
+    }
+
+    // HTML slide
+    return (
+      <section
+        key={index}
+        className="bn-presentation-slide"
+      >
+        <div
+          className="bn-container bn-default-styles"
+          dangerouslySetInnerHTML={{ __html: slide.content }}
+        />
+      </section>
+    );
+  };
 
   return createPortal(
     <div className="bn-presentation-modal" data-id="presentation-modal" data-theme={theme}>
@@ -176,21 +206,11 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       {/* Reveal.js container */}
       <div ref={revealRef} className={`reveal theme-${theme}`}>
         <div className="slides">
-          {slides.map((slideElement, index) => (
-            <section
-              key={index}
-              className="bn-presentation-slide"
-            >
-              {/* Render HTML with BlockNote classes */}
-              <div 
-                className="bn-container bn-default-styles"
-                dangerouslySetInnerHTML={{ __html: slideElement }}
-              />
-            </section>
-          ))}
+          {slides.map((slide, index) => renderSlide(slide, index))}
         </div>
       </div>
     </div>,
     document.body
   );
 };
+

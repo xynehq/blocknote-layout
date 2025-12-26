@@ -1054,18 +1054,219 @@
   margin-bottom: 0 !important;
 }
 
-/* Force content to fit within slide bounds */
+/* Prevent scrolling - weight-based splitting ensures content fits */
 .bn-presentation-modal .reveal .slides section {
   height: 100% !important;
   overflow: hidden !important;
+  width: 100% !important;
 }
 
 .bn-presentation-modal .reveal .slides section .bn-container {
   transform-origin: top left;
   max-height: 100%;
+  max-width: 100% !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
 }
 
 /* Make Reveal.js use fit mode */
 .bn-presentation-modal .reveal .slide-background {
   height: 100% !important;
+}
+
+/* Nested list indentation - BlockNote uses .bn-block-group for nested content */
+.bn-presentation-modal .reveal .bn-block-group {
+  padding-left: 2em !important;
+  margin-top: 0.2em !important;
+}
+
+/* Ensure nested list items maintain proper styling */
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer [data-content-type="bulletListItem"],
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer [data-content-type="numberedListItem"],
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer ul li,
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer ol li {
+  font-size: clamp(0.65em, 1.2vw, 1em) !important;
+  margin: 0.1em 0 !important;
+}
+
+/* Reduce bullet/number size for nested items */
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer [data-content-type="bulletListItem"]::before,
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer [data-content-type="numberedListItem"]::before,
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer ul li::before,
+.bn-presentation-modal .reveal .bn-block-group .bn-block-outer ol li::before {
+  font-size: 0.9em !important;
+}
+
+/* ============================================
+   Whiteboard Slide Styles
+   ============================================ */
+
+/* Whiteboard slide container */
+.bn-presentation-modal .reveal .bn-whiteboard-slide {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 1600px !important;
+  height: 100% !important;
+  margin: 0 auto !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-title {
+  font-size: 2em !important;
+  font-weight: 600 !important;
+  color: #2d3748 !important;
+  margin-bottom: 20px !important;
+  text-align: center !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-svg {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-svg svg {
+  max-width: 100% !important;
+  max-height: 70vh !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Empty whiteboard slide */
+.bn-presentation-modal .reveal .whiteboard-slide-container.whiteboard-empty {
+  color: #64748b !important;
+}
+
+/* Error whiteboard slide */
+.bn-presentation-modal .reveal .whiteboard-slide-container.whiteboard-error {
+  color: #ef4444 !important;
+}
+
+/* Black theme whiteboard adjustments */
+.bn-presentation-modal[data-theme="black"] .reveal .whiteboard-slide-title {
+  color: #e0e0e0 !important;
+}
+
+.bn-presentation-modal[data-theme="black"] .reveal .whiteboard-slide-svg svg {
+  background: #1a1a1a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Beige theme whiteboard adjustments */
+.bn-presentation-modal[data-theme="beige"] .reveal .whiteboard-slide-title {
+  color: #3e2723 !important;
+}
+
+.bn-presentation-modal[data-theme="beige"] .reveal .whiteboard-slide-svg svg {
+  background: #f5f0e8 !important;
+  box-shadow: 0 4px 12px rgba(62, 39, 35, 0.1) !important;
+}
+
+/* Sky theme whiteboard adjustments */
+.bn-presentation-modal[data-theme="sky"] .reveal .whiteboard-slide-title {
+  color: #1e3a5f !important;
+}
+
+.bn-presentation-modal[data-theme="sky"] .reveal .whiteboard-slide-svg svg {
+  background: #e8f4fc !important;
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.1) !important;
+}
+
+/* ============================================
+   Excalidraw Whiteboard Presentation Slides
+   ============================================ */
+
+/* Whiteboard presentation slide container */
+.bn-presentation-modal .reveal .bn-whiteboard-presentation-slide {
+  padding: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-title {
+  font-size: 2em !important;
+  font-weight: 600 !important;
+  color: #2d3748 !important;
+  margin-bottom: 20px !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw {
+  flex: 1 !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Excalidraw fills the container */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+/* Hide Excalidraw UI in presentation mode */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .App-menu,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .footer-container,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw-footer,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .layer-ui__wrapper {
+  display: none !important;
+}
+
+/* Hide Excalidraw context menu in presentation mode */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .context-menu,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw [class*="ContextMenu"],
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .popover,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw [role="menu"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Prevent any context menu from appearing */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw-container {
+  -webkit-touch-callout: none !important;
+  /* iOS Safari */
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
 }

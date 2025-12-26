@@ -1,7 +1,79 @@
 import type { BlockNoteEditor } from '@blocknote/core';
 
-// Maximum blocks per slide before forcing a split (safety net)
-const MAX_BLOCKS_PER_SLIDE = 15;
+// Slide content types - supports both HTML and React component data
+export interface HtmlSlide {
+  type: 'html';
+  content: string;
+}
+
+export interface WhiteboardSlide {
+  type: 'whiteboard';
+  title: string;
+  data: {
+    elements: any[];
+    appState: any;
+    files: any;
+  };
+}
+
+export type SlideContent = HtmlSlide | WhiteboardSlide;
+
+// Parse whiteboard data from string or object
+const parseWhiteboardData = (data: string | object | null): { elements: any[]; appState: any; files: any } | null => {
+  if (!data) return null;
+
+  try {
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+
+    if (parsed && (parsed.elements || parsed.appState)) {
+      return {
+        elements: parsed.elements || [],
+        appState: parsed.appState || {},
+        files: parsed.files || null,
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to parse whiteboard data:', error);
+  }
+
+  return null;
+};
+
+// Maximum visual weight per slide (replaces simple block count)
+const MAX_WEIGHT_PER_SLIDE = 20;
+
+// Estimate the visual "weight" of a block based on content and nesting
+const estimateBlockWeight = (block: any): number => {
+  if (!block._domElement) return 1;
+
+  // Count nested blocks (for lists with many children)
+  const nestedBlocks = block._domElement.querySelectorAll('.bn-block-outer');
+  const nestedCount = nestedBlocks.length;
+
+  // Get text content length
+  const textContent = block._domElement.textContent || '';
+  const textLength = textContent.trim().length;
+
+  // Calculate weight components
+  const baseWeight = 1;
+  const textWeight = textLength / 200; // ~200 characters = 1 weight unit
+  const nestingWeight = nestedCount * 0.3; // Each nested block = 0.3 weight units
+
+  // Headings don't count toward weight - they trigger their own splits in Step 3
+  if (block.type === 'heading') {
+    return 0;
+  }
+
+  // Block type multipliers (only for non-heading blocks)
+  let typeMultiplier = 1;
+  if (block.type === 'code' || block.type === 'table') {
+    typeMultiplier = 1.5; // Code and tables take more space
+  }
+
+  const totalWeight = (baseWeight + textWeight + nestingWeight) * typeMultiplier;
+
+  return Math.max(1, totalWeight); // Minimum weight of 1
+};
 
 // Extract text content from inline content
 const extractText = (content: any[]): string => {
@@ -16,17 +88,18 @@ const extractText = (content: any[]): string => {
 
 // Check if a block is empty (has no meaningful content)
 const isEmptyBlock = (block: any): boolean => {
-  // Check if it's a paragraph with no content or only whitespace
-  if (block.type === 'paragraph') {
-    const text = extractText(block.content).trim();
-    return text === '';
+  // Whiteboard blocks are never empty if they have data
+  if (block.type === 'whiteboard') {
+    return !block.props?.whiteboardData;
   }
-  // Empty list items
-  if (block.type === 'bulletListItem' || block.type === 'numberedListItem') {
-    const text = extractText(block.content).trim();
-    return text === '';
+
+  if (block.type === 'mermaid') {
+    return false;
   }
-  return false;
+
+  // Check text content from DOM for regular blocks
+  const text = block._domElement?.textContent?.trim() || '';
+  return text === '';
 };
 
 // Check if a slide (array of blocks) contains only empty blocks
@@ -41,7 +114,7 @@ const isManualSeparator = (block: any): boolean => {
     return true;
   }
   if (block.type === 'paragraph') {
-    const text = extractText(block.content).trim();
+    const text = block._domElement?.textContent?.trim() || '';
     return text === '---' || text === '***' || text === '—' || text === '___' || text === '- - -';
   }
   return false;
@@ -120,8 +193,17 @@ const splitByHeadings = (blocks: any[]): any[][] => {
 
     // Split on H1 or H2 (depending on splitLevel), but NOT on H3
     if (level === splitLevel && i > 0) {
-      if (current.length > 0) sections.push(current);
-      current = [block];
+      // Only split if current section has content (not just headings)
+      // This prevents slides with a single heading
+      const hasContent = current.some(b => getHeadingLevel(b) === 0);
+
+      if (hasContent && current.length > 0) {
+        sections.push(current);
+        current = [block];
+      } else {
+        // No content yet, keep accumulating (heading + subheadings)
+        current.push(block);
+      }
     } else {
       current.push(block);
     }
@@ -131,106 +213,189 @@ const splitByHeadings = (blocks: any[]): any[][] => {
   return sections.length > 0 ? sections : [blocks];
 };
 
-// STEP 4: Smart split for long sections - try to break at H3 boundaries
+// STEP 4: Smart split for long sections using visual weight instead of block count
 const splitLongSection = (blocks: any[]): any[][] => {
-  if (blocks.length <= MAX_BLOCKS_PER_SLIDE) return [blocks];
+  // Calculate total weight of all blocks
+  const totalWeight = blocks.reduce((sum, block) => sum + estimateBlockWeight(block), 0);
+
+  // If total weight fits in one slide, no need to split
+  if (totalWeight <= MAX_WEIGHT_PER_SLIDE) {
+    return [blocks];
+  }
 
   const slides: any[][] = [];
-  let current: any[] = [];
-  const MIN_BLOCKS_FOR_H3 = 3;
+  let currentSlide: any[] = [];
+  let currentWeight = 0;
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
-    const level = getHeadingLevel(block);
+    const blockWeight = estimateBlockWeight(block);
 
-    if (level === 3 && current.length >= (MAX_BLOCKS_PER_SLIDE - MIN_BLOCKS_FOR_H3)) {
-      if (current.length > 0) {
-        slides.push(current);
-        current = [];
+    // Would adding this block exceed the threshold?
+    if (currentWeight + blockWeight > MAX_WEIGHT_PER_SLIDE) {
+      // Check if this block can fit on its own slide
+      if (blockWeight <= MAX_WEIGHT_PER_SLIDE) {
+        // YES - Move entire block to next slide (don't cut it)
+        if (currentSlide.length > 0) {
+          slides.push(currentSlide);
+        }
+        currentSlide = [block];
+        currentWeight = blockWeight;
+      } else {
+        // NO - Block is too large even for its own slide
+        // Put it on its own slide anyway (unavoidable overflow)
+        if (currentSlide.length > 0) {
+          slides.push(currentSlide);
+        }
+        slides.push([block]);
+        currentSlide = [];
+        currentWeight = 0;
       }
-      current.push(block);
     } else {
-      current.push(block);
+      // Block fits, add it to current slide
+      currentSlide.push(block);
+      currentWeight += blockWeight;
 
-      if (current.length >= MAX_BLOCKS_PER_SLIDE) {
-        const nextBlock = blocks[i + 1];
-        const isGoodBreak = !nextBlock ||
-          getHeadingLevel(nextBlock) === 3 ||
-          getHeadingLevel(nextBlock) > 0 ||
-          (block.type !== 'bulletListItem' && block.type !== 'numberedListItem');
+      // Optional: Try to break at H3 boundaries when we're getting close to limit
+      const nextBlock = blocks[i + 1];
+      if (nextBlock) {
+        const nextWeight = estimateBlockWeight(nextBlock);
+        const nextLevel = getHeadingLevel(nextBlock);
 
-        if (isGoodBreak) {
-          slides.push(current);
-          current = [];
+        // If next block is H3 and adding it would exceed, break here
+        if (nextLevel === 3 && currentWeight + nextWeight > MAX_WEIGHT_PER_SLIDE) {
+          slides.push(currentSlide);
+          currentSlide = [];
+          currentWeight = 0;
         }
       }
     }
   }
 
-  if (current.length > 0) slides.push(current);
-  return slides;
-};
-
-const extractInlineContent = (content: any): any[] => {
-  if (!content) return [];
-  const nodes: any[] = [];
-  if (content.content) {
-    content.content.forEach((node: any) => nodes.push(node));
+  // Add remaining blocks
+  if (currentSlide.length > 0) {
+    slides.push(currentSlide);
   }
-  return nodes.map((node: any) => {
-    if (node.type?.name === 'text') {
-      const styles: any = {};
-      if (node.marks) {
-        node.marks.forEach((mark: any) => {
-          if (mark.type.name === 'bold') styles.bold = true;
-          if (mark.type.name === 'italic') styles.italic = true;
-          if (mark.type.name === 'underline') styles.underline = true;
-          if (mark.type.name === 'strike') styles.strike = true;
-          if (mark.type.name === 'code') styles.code = true;
-          if (mark.type.name === 'textStyle' && mark.attrs.color) styles.textColor = mark.attrs.color;
-          if (mark.type.name === 'backgroundColor') styles.backgroundColor = mark.attrs.backgroundColor;
-          if (mark.type.name === 'link') {
-            return { type: 'link', href: mark.attrs.href, content: [{ type: 'text', text: node.text, styles }] };
-          }
-        });
-      }
-      return { type: 'text', text: node.text, styles };
-    }
-    return { type: 'text', text: '' };
-  });
+
+  return slides.length > 0 ? slides : [blocks];
 };
 
 /**
- * Generate slides HTML from BlockNote editor by cloning actual DOM elements.
- * This preserves all custom blocks like mermaid diagrams, columns, etc.
- * 
- * @param editor - The BlockNote editor instance (must have access to editor._tiptapEditor)
- * @returns Array of HTML strings, one per slide
+ * Generate slides HTML from BlockNote editor using pure DOM traversal.
+ * This preserves all custom blocks and nested structures.
+ * Returns a Promise that resolves to an array of SlideContent (HTML or Whiteboard).
  */
-export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>): string[] => {
+export const generateSlidesFromBlocks = async (editor: BlockNoteEditor<any, any, any>): Promise<SlideContent[]> => {
   const tiptapEditor = (editor as any)._tiptapEditor;
   if (!tiptapEditor) {
     console.error('Could not access tiptap editor');
-    return ['<p>Error: Could not access editor</p>'];
+    return [{ type: 'html', content: '<p>Error: Could not access editor</p>' }];
   }
 
-  // Extract block data from the document for splitting logic
-  const docContent: any[] = [];
-  const nodeToBlockMap = new Map<any, any>();
+  // Get the ProseMirror document for accessing node attributes (needed for whiteboard data)
+  const pmDoc = tiptapEditor.state.doc;
 
-  tiptapEditor.state.doc.descendants((node: any) => {
-    if (node.type.name === 'blockContainer' && node.firstChild) {
-      const blockNode = node.firstChild;
-      const attrs = { ...blockNode.attrs };
-      const blockData: any = {
-        type: blockNode.type.name,
-        props: attrs,
-        content: extractInlineContent(blockNode.content),
-        _node: node, // Keep reference to the ProseMirror node
-      };
-      docContent.push(blockData);
-      nodeToBlockMap.set(blockData, node);
+  // Use pure DOM - no ProseMirror mapping needed!
+  const editorContainer = tiptapEditor.view.dom;
+  const allBlockElements = Array.from(editorContainer.querySelectorAll('.bn-block-outer')) as HTMLElement[];
+
+  // Filter to only top-level blocks (not nested in another block-group)
+  const topLevelBlockElements = allBlockElements.filter((blockEl) => {
+    let parent = blockEl.parentElement;
+    let blockGroupCount = 0;
+
+    while (parent && parent !== editorContainer) {
+      if (parent.classList.contains('bn-block-group')) {
+        blockGroupCount++;
+      }
+      parent = parent.parentElement;
     }
+
+    return blockGroupCount === 1;
+  });
+
+  // Collect all whiteboard nodes from ProseMirror document first
+  // This ensures we can match them in order with DOM elements
+  const whiteboardNodes: Array<{ data: string | object | null; title: string }> = [];
+  pmDoc.descendants((node: any) => {
+    if (node.type.name === 'whiteboard') {
+      whiteboardNodes.push({
+        data: node.attrs.data,
+        title: node.attrs.title || 'Whiteboard',
+      });
+    }
+    return true;
+  });
+  let whiteboardIndex = 0;
+
+  // Extract block data directly from DOM
+  const docContent: any[] = [];
+
+  topLevelBlockElements.forEach((domElement) => {
+    // Get block type from data attribute or element structure
+    // Check both child elements and the element itself (for custom blocks like whiteboard)
+    let blockContent = domElement.querySelector('[data-content-type]');
+    let type = blockContent?.getAttribute('data-content-type') || 'paragraph';
+
+    // Special handling for collapsed custom blocks - check wrapper classes
+    // This handles cases where the content-type is on a wrapper that might not be the direct child
+    if (!blockContent || type === 'paragraph') {
+      // Check for whiteboard wrapper (handles collapsed state)
+      const whiteboardWrapper = domElement.querySelector('.whiteboard-wrapper, .blocknote-whiteboard');
+      if (whiteboardWrapper) {
+        type = 'whiteboard';
+        blockContent = whiteboardWrapper;
+      }
+
+      // Check for mermaid wrapper
+      const mermaidWrapper = domElement.querySelector('.mermaid-wrapper, .blocknote-mermaid');
+      if (mermaidWrapper) {
+        type = 'mermaid';
+        blockContent = mermaidWrapper;
+      }
+    }
+
+    // Extract additional props based on block type
+    const props: any = {};
+
+    if (type === 'heading') {
+      // Try to get heading level from data attribute
+      const levelAttr = blockContent?.getAttribute('data-level');
+      if (levelAttr) {
+        props.level = parseInt(levelAttr, 10);
+      } else {
+        // Fallback: check for h1, h2, h3 elements inside
+        const h1 = domElement.querySelector('h1');
+        const h2 = domElement.querySelector('h2');
+        const h3 = domElement.querySelector('h3');
+        if (h1) props.level = 1;
+        else if (h2) props.level = 2;
+        else if (h3) props.level = 3;
+        else props.level = 1; // Default to H1
+      }
+    }
+
+    // For whiteboard blocks, extract the data from the pre-collected nodes
+    if (type === 'whiteboard') {
+      // Get the corresponding whiteboard node data (in order)
+      if (whiteboardIndex < whiteboardNodes.length) {
+        const whiteboardNode = whiteboardNodes[whiteboardIndex];
+        const parsed = parseWhiteboardData(whiteboardNode.data);
+        if (parsed) {
+          props.whiteboardData = parsed;
+          props.whiteboardTitle = whiteboardNode.title;
+        }
+        whiteboardIndex++;
+      }
+    }
+
+    const blockData: any = {
+      type: type,
+      props: props,
+      _domElement: domElement, // Store DOM reference directly
+    };
+
+    docContent.push(blockData);
   });
 
   // Filter out slideshow blocks
@@ -244,7 +409,7 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
   allBlocks = allBlocks.slice(firstNonEmptyIndex);
 
   if (allBlocks.length === 0) {
-    return ['<p>Empty Canvas</p>'];
+    return [{ type: 'html', content: '<p>Empty Canvas</p>' }];
   }
 
   // Apply splitting logic
@@ -263,51 +428,45 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
       // Split by headings (primary strategy for regular content)
       const headingSections = splitByHeadings(customSection);
 
-      // For each heading section, split by block count if it's too long (safety net)
+      // For each heading section, split by weight if needed
       for (const headingSection of headingSections) {
-        if (isEmptySlide(headingSection)) continue; // Skip empty slides
+        if (isEmptySlide(headingSection)) continue;
 
-        if (headingSection.length > MAX_BLOCKS_PER_SLIDE) {
-          const blockSections = splitLongSection(headingSection);
-          // Filter out any empty slides from block sections
-          finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
-        } else {
-          finalSlides.push(headingSection);
-        }
+        // splitLongSection now handles weight-based splitting internally
+        const blockSections = splitLongSection(headingSection);
+        finalSlides.push(...blockSections.filter(slide => !isEmptySlide(slide)));
       }
     }
   }
 
   if (finalSlides.length === 0) {
-    return ['<p>Empty Canvas</p>'];
+    return [{ type: 'html', content: '<p>Empty Canvas</p>' }];
   }
 
-  // Get all DOM block elements from the editor
-  const editorContainer = tiptapEditor.view.dom;
-  const allBlockElements = Array.from(editorContainer.querySelectorAll('.bn-block-outer')) as HTMLElement[];
-
-  // Map ProseMirror nodes to DOM elements
-  const blockDomMap = new Map<any, HTMLElement>();
-  let blockIndex = 0;
-
-  tiptapEditor.state.doc.descendants((node: any) => {
-    if (node.type.name === 'blockContainer' && blockIndex < allBlockElements.length) {
-      blockDomMap.set(node, allBlockElements[blockIndex]);
-      blockIndex++;
+  // Build slides - return SlideContent[] (HTML or Whiteboard)
+  const slides: SlideContent[] = finalSlides.map((slideBlocks) => {
+    // Check if this is a whiteboard-only slide
+    if (slideBlocks.length === 1 && slideBlocks[0].type === 'whiteboard' && slideBlocks[0].props?.whiteboardData) {
+      const block = slideBlocks[0];
+      return {
+        type: 'whiteboard' as const,
+        title: block.props.whiteboardTitle || 'Whiteboard',
+        data: block.props.whiteboardData,
+      };
     }
-  });
 
-  // Build slides by cloning DOM elements
-  const htmlSlides = finalSlides.map((slideBlocks) => {
+    // Otherwise, build HTML slide
     const slideDiv = document.createElement('div');
     slideDiv.className = 'bn-slide-content';
 
     for (const block of slideBlocks) {
-      const pmNode = nodeToBlockMap.get(block);
-      const domElement = pmNode ? blockDomMap.get(pmNode) : null;
+      // Skip whiteboards in mixed slides (they get their own slide above)
+      if (block.type === 'whiteboard') continue;
+
+      const domElement = block._domElement;
 
       if (domElement) {
-        // Clone the actual DOM element (preserves mermaid, columns, etc.)
+        // Clone the actual DOM element (preserves nested lists, mermaid, etc.)
         const clone = domElement.cloneNode(true) as HTMLElement;
 
         // Clean up editor-specific attributes and elements
@@ -319,8 +478,11 @@ export const generateSlidesFromBlocks = (editor: BlockNoteEditor<any, any, any>)
       }
     }
 
-    return slideDiv.innerHTML || '<p>Empty slide</p>';
+    return {
+      type: 'html' as const,
+      content: slideDiv.innerHTML || '<p>Empty slide</p>',
+    };
   });
 
-  return htmlSlides;
+  return slides;
 };

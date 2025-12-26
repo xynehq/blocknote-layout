@@ -12,10 +12,12 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
     const { node, updateAttributes } = props;
     const [titleValue, setTitleValue] = useState(node.attrs.title || 'Untitled Whiteboard');
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [fontsLoaded, setFontsLoaded] = useState(false);
+    const [previewKey, setPreviewKey] = useState(0);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isInitialLoadRef = useRef(true);
-    const componentKeyRef = useRef(Math.random().toString(36));
+    const previewExcalidrawRef = useRef<any>(null);
 
     // Detect if mobile
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -60,6 +62,23 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
             updateAttributes({ title: titleValue });
         }
     }, [titleValue, updateAttributes]);
+
+    // Handle preview Excalidraw initialization - center and zoom to fit content
+    const handlePreviewMount = useCallback((api: any) => {
+        previewExcalidrawRef.current = api;
+
+        // Wait for canvas to be ready, then scroll to fit content
+        setTimeout(() => {
+            const elements = initialData?.elements;
+            if (api && api.scrollToContent && elements && elements.length > 0) {
+                api.scrollToContent(elements, {
+                    fitToContent: true,
+                    animate: false,
+                    duration: 0,
+                });
+            }
+        }, 100);
+    }, [initialData?.elements]);
 
     // Handle whiteboard changes with debouncing
     const handleExcalidrawChange = useCallback((elements: readonly unknown[], appState: unknown, _files: unknown) => {
@@ -166,9 +185,27 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
             .excalidraw button[aria-label*="library"], 
             .excalidraw button[aria-label*="Library"], 
             .excalidraw .App-menu__library-button,
-            .excalidraw .layer-ui__wrapper .top-right-elements > button:last-child {
+            .excalidraw .layer-ui__wrapper .top-right-elements,
+            .excalidraw .layer-ui__wrapper .top-left-elements,
+            .excalidraw .App-menu_top,
+            .excalidraw .App-menu-button,
+            .excalidraw [data-testid="main-menu-trigger"],
+            .excalidraw [data-testid="library-button"],
+            .excalidraw .sidebar-trigger,
+            .excalidraw .tt-button[aria-label="Library"],
+            .excalidraw .tt-button[aria-label="Main menu"],
+            .excalidraw .App-bottom-bar,
+            .excalidraw .footer-center,
+            .excalidraw .App-toolbar,
+            .excalidraw .island.App-toolbar {
                 display: none !important;
                 visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                width: 0 !important;
+                height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
         `;
         document.head.appendChild(style);
@@ -202,7 +239,11 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         return createPortal(
             <div className="whiteboard-modal-overlay">
                 <div className="whiteboard-modal-header">
-                    <button className="whiteboard-modal-close" onClick={() => setIsExpanded(false)}>
+                    <button className="whiteboard-modal-close" onClick={() => {
+                        setIsExpanded(false);
+                        // Force preview to re-render with updated data
+                        setPreviewKey(prev => prev + 1);
+                    }}>
                         <MdClose size={20} />
                         <span>Close</span>
                     </button>
@@ -277,42 +318,47 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
 
     return (
         <NodeViewWrapper>
-            <div className="whiteboard-wrapper blocknote-whiteboard" data-content-type="whiteboard">
+            <div className={`whiteboard-wrapper blocknote-whiteboard ${isCollapsed ? 'whiteboard-collapsed' : ''}`} data-content-type="whiteboard">
                 <WhiteboardToolbar
                     title={titleValue}
                     setTitle={setTitleValue}
                     onTitleBlur={handleTitleBlur}
                     onExpand={() => setIsExpanded(true)}
+                    isCollapsed={isCollapsed}
+                    onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
                 />
 
-                <div className="whiteboard-preview-container" onClick={() => setIsExpanded(true)}>
-                    <div className="whiteboard-preview-placeholder">
-                        {fontsLoaded && (
-                            <Excalidraw
-                                key={componentKeyRef.current}
-                                initialData={initialData || undefined}
-                                viewModeEnabled={true}
-                                zenModeEnabled={true}
-                                gridModeEnabled={false}
-                                renderTopRightUI={() => null}
-                                UIOptions={{
-                                    canvasActions: {
-                                        clearCanvas: false,
-                                        saveAsImage: false,
-                                        loadScene: false,
-                                        saveToActiveFile: false,
-                                        export: false,
-                                        toggleTheme: false,
-                                        changeViewBackgroundColor: false,
-                                    }
-                                }}
-                            />
-                        )}
-                        <div className="whiteboard-preview-overlay">
-                            <span>Continue Drawing</span>
+                {!isCollapsed && (
+                    <div className="whiteboard-preview-container" onClick={() => setIsExpanded(true)}>
+                        <div className="whiteboard-preview-placeholder">
+                            {fontsLoaded && (
+                                <Excalidraw
+                                    key={`preview-${previewKey}`}
+                                    initialData={initialData || undefined}
+                                    viewModeEnabled={true}
+                                    zenModeEnabled={true}
+                                    gridModeEnabled={false}
+                                    renderTopRightUI={() => null}
+                                    excalidrawAPI={handlePreviewMount}
+                                    UIOptions={{
+                                        canvasActions: {
+                                            clearCanvas: false,
+                                            saveAsImage: false,
+                                            loadScene: false,
+                                            saveToActiveFile: false,
+                                            export: false,
+                                            toggleTheme: false,
+                                            changeViewBackgroundColor: false,
+                                        }
+                                    }}
+                                />
+                            )}
+                            <div className="whiteboard-preview-overlay">
+                                <span>Continue Drawing</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {renderFullEditor()}
             </div>

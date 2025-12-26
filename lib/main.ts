@@ -12,21 +12,23 @@ export {
 export type { CodeBlockProps, RunnerResult as Judge0Result, RunnerResult, CodeRunnerConfig } from "./coderunner/main.js";
 
 // Slideshow exports
+
 export {
-    Slide,
-    Slideshow,
-    SlideBlock,
-    SlideshowBlock,
-    slideshowBlockSpecs,
-    createSlideshowSchema,
-    checkSlideshowBlocksInSchema,
-    withSlideshow,
-    slideshowSchema,
-    getSlideshowSlashMenuItems,
-    insertSlideshow,
-    SlideshowNode,
-    SlideNodeView,
     PresentationModal,
+    PresentToolbar,
+    usePresentation,
+    PRESENTATION_THEMES,
+    generateSlidesFromBlocks,
+} from "./slideshow/main.js";
+
+export type {
+    PresentToolbarProps,
+    UsePresentationOptions,
+    UsePresentationReturn,
+    PresentationTheme,
+    SlideContent,
+    HtmlSlide,
+    WhiteboardSlide,
 } from "./slideshow/main.js";
 
 // Whiteboard exports

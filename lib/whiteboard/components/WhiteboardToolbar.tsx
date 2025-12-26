@@ -1,11 +1,13 @@
 import React from "react";
-import { MdOpenInFull } from "react-icons/md";
+import { MdOpenInFull, MdKeyboardArrowDown } from "react-icons/md";
 
 interface WhiteboardToolbarProps {
     title: string;
     setTitle: (title: string) => void;
     onTitleBlur: () => void;
     onExpand: () => void;
+    isCollapsed: boolean;
+    onToggleCollapse: () => void;
 }
 
 export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
@@ -13,9 +15,24 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
     setTitle,
     onTitleBlur,
     onExpand,
+    isCollapsed,
+    onToggleCollapse,
 }) => {
     return (
         <div className="whiteboard-toolbar">
+            <button
+                className="whiteboard-collapse-button"
+                onClick={onToggleCollapse}
+                title={isCollapsed ? "Expand whiteboard" : "Collapse whiteboard"}
+            >
+                <MdKeyboardArrowDown
+                    size={20}
+                    style={{
+                        transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease'
+                    }}
+                />
+            </button>
             <input
                 type="text"
                 className="whiteboard-title-input"
