@@ -18,6 +18,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isInitialLoadRef = useRef(true);
     const previewExcalidrawRef = useRef<any>(null);
+    const editorExcalidrawRef = useRef<any>(null);
 
     // Detect if mobile
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -178,34 +179,37 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
             isInitialLoadRef.current = false;
         }, 1500);
 
-        // Inject global nuclear CSS to kill the library button once and for all
+        // Inject global nuclear CSS to kill unwanted UI elements
+        // NOTE: Do NOT hide .App-toolbar or .island.App-toolbar as these are the main drawing tools!
+        // NOTE: Do NOT hide footer as it contains useful zoom controls!
         const style = document.createElement('style');
         style.innerHTML = `
             .excalidraw .library-button, 
             .excalidraw button[aria-label*="library"], 
             .excalidraw button[aria-label*="Library"], 
             .excalidraw .App-menu__library-button,
-            .excalidraw .layer-ui__wrapper .top-right-elements,
-            .excalidraw .layer-ui__wrapper .top-left-elements,
-            .excalidraw .App-menu_top,
-            .excalidraw .App-menu-button,
-            .excalidraw [data-testid="main-menu-trigger"],
             .excalidraw [data-testid="library-button"],
             .excalidraw .sidebar-trigger,
             .excalidraw .tt-button[aria-label="Library"],
+            .excalidraw [data-testid="main-menu-trigger"],
+            .excalidraw .App-menu-button,
             .excalidraw .tt-button[aria-label="Main menu"],
-            .excalidraw .App-bottom-bar,
-            .excalidraw .footer-center,
-            .excalidraw .App-toolbar,
-            .excalidraw .island.App-toolbar {
+            .excalidraw .HelpButton,
+            .excalidraw [data-testid="help-icon"],
+            .excalidraw button[aria-label="Help"],
+            .excalidraw .help-icon,
+            .excalidraw .welcome-screen-center,
+            .excalidraw .welcome-screen-menu-hints,
+            .excalidraw .welcome-screen-shortcuts-hints,
+            .excalidraw [class*="welcome-screen"],
+            .excalidraw .layer-ui__wrapper__footer-center .Island,
+            .excalidraw .scroll-back-to-content,
+            .excalidraw [data-testid="scroll-back-to-content"],
+            .excalidraw button[aria-label="Scroll back to content"] {
                 display: none !important;
                 visibility: hidden !important;
                 opacity: 0 !important;
                 pointer-events: none !important;
-                width: 0 !important;
-                height: 0 !important;
-                padding: 0 !important;
-                margin: 0 !important;
             }
         `;
         document.head.appendChild(style);
@@ -286,6 +290,20 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                             detectScroll={false}
                             handleKeyboardGlobally={true}
                             viewModeEnabled={isMobile}
+                            excalidrawAPI={(api) => {
+                                editorExcalidrawRef.current = api;
+                                // Auto-scroll to content when editor opens
+                                setTimeout(() => {
+                                    const elements = initialData?.elements;
+                                    if (api && api.scrollToContent && elements && elements.length > 0) {
+                                        api.scrollToContent(elements, {
+                                            fitToContent: true,
+                                            animate: false,
+                                            duration: 0,
+                                        });
+                                    }
+                                }, 150);
+                            }}
                             UIOptions={{
                                 canvasActions: {
                                     loadScene: false,

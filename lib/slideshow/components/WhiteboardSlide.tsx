@@ -12,6 +12,23 @@ interface WhiteboardSlideProps {
     theme?: string;
 }
 
+// Get theme-specific settings
+const getThemeSettings = (theme: string) => {
+    switch (theme) {
+        case 'black':
+            return {
+                excalidrawTheme: 'dark' as const,
+            };
+        case 'white':
+        case 'beige':
+        case 'sky':
+        default:
+            return {
+                excalidrawTheme: 'light' as const,
+            };
+    }
+};
+
 /**
  * Renders an Excalidraw whiteboard in read-only mode for presentation slides.
  * Uses Excalidraw's built-in zoom-to-fit and scrollToContent for optimal viewing.
@@ -24,8 +41,7 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
     const [isReady, setIsReady] = useState(false);
     const excalidrawAPIRef = useRef<any>(null);
 
-    // Determine if we should use dark mode based on theme
-    const isDarkMode = theme === 'black';
+    const themeSettings = getThemeSettings(theme);
 
     // Prepare initial data with centered content
     const initialData = useMemo(() => {
@@ -35,13 +51,14 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
             elements: visibleElements,
             appState: {
                 ...data.appState,
-                viewBackgroundColor: isDarkMode ? '#1a1a1a' : (data.appState?.viewBackgroundColor || '#ffffff'),
-                theme: isDarkMode ? 'dark' : 'light',
+                // Use transparent background so it blends with the slide theme
+                viewBackgroundColor: 'transparent',
+                theme: themeSettings.excalidrawTheme,
             },
             files: data.files || null,
             scrollToContent: true,
         };
-    }, [data, isDarkMode]);
+    }, [data, themeSettings.excalidrawTheme]);
 
     // Handle Excalidraw initialization and scroll to content
     const handleExcalidrawMount = useCallback((api: any) => {
@@ -64,7 +81,7 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
 
     if (!hasContent) {
         return (
-            <div className="whiteboard-slide-container whiteboard-empty">
+            <div className="whiteboard-slide-container whiteboard-empty" data-theme={theme}>
                 {title && <div className="whiteboard-slide-title">{title}</div>}
                 <p style={{ color: '#64748b', fontStyle: 'italic', fontSize: '1.5em' }}>
                     Empty Whiteboard
@@ -76,6 +93,7 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
     return (
         <div
             className="whiteboard-slide-excalidraw-container"
+            data-theme={theme}
             onContextMenu={(e) => e.preventDefault()}
         >
             {title && <div className="whiteboard-slide-title">{title}</div>}
@@ -84,16 +102,19 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
                 style={{
                     opacity: isReady ? 1 : 0,
                     transition: 'opacity 0.3s ease',
+                    background: 'transparent',
                 }}
                 onContextMenu={(e) => e.preventDefault()}
             >
                 <Excalidraw
+                    key={theme} // Force remount when theme changes to correctly apply dark/light mode
                     initialData={initialData}
                     viewModeEnabled={true}
                     zenModeEnabled={true}
                     gridModeEnabled={false}
                     renderTopRightUI={() => null}
                     excalidrawAPI={handleExcalidrawMount}
+                    theme={themeSettings.excalidrawTheme}
                     UIOptions={{
                         canvasActions: {
                             clearCanvas: false,
@@ -112,4 +133,3 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
 };
 
 export default WhiteboardSlide;
-

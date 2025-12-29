@@ -499,7 +499,9 @@
 }
 
 /* Counter for numbered list items across slides */
-.bn-presentation-modal .reveal .slides section {
+.bn-presentation-modal .reveal .slides section,
+.bn-presentation-modal .reveal .bn-block-group,
+.bn-presentation-modal .reveal ol {
   counter-reset: slide-numbered-list !important;
 }
 
@@ -1269,4 +1271,47 @@
   -moz-user-select: none !important;
   -ms-user-select: none !important;
   user-select: none !important;
+}
+
+/* ============================================
+   THEME-SPECIFIC FIXES
+   ============================================ */
+
+/* Fix bullet/number points visibility in BLACK theme */
+.bn-presentation-modal[data-theme="black"] .reveal .bn-block-outer [data-content-type="bulletListItem"]::before,
+.bn-presentation-modal[data-theme="black"] .reveal .bn-block-outer [data-content-type="numberedListItem"]::before,
+.bn-presentation-modal[data-theme="black"] .reveal [data-content-type="bulletListItem"]::before,
+.bn-presentation-modal[data-theme="black"] .reveal [data-content-type="numberedListItem"]::before {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Whiteboard container styling - seamless with theme */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw-container {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Excalidraw wrapper - no borders, seamless */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure Excalidraw fills its container */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Hide any Excalidraw UI elements */
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .layer-ui__wrapper,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .App-menu,
+.bn-presentation-modal .reveal .whiteboard-slide-excalidraw .excalidraw .footer-center {
+  display: none !important;
 }

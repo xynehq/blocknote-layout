@@ -15,7 +15,7 @@ export interface UsePresentationReturn {
 
   // Actions
   setSelectedTheme: (theme: string) => void;
-  handleThemeChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleThemeChange: (themeOrEvent: string | React.ChangeEvent<HTMLSelectElement>) => void;
   handlePresent: () => Promise<void>;
   closePresentation: () => void;
 }
@@ -37,8 +37,8 @@ export function usePresentation({
   const [showPresentation, setShowPresentation] = useState(false);
   const [generatedSlides, setGeneratedSlides] = useState<SlideContent[]>([]);
 
-  const handleThemeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>): void => {
-    const newTheme = event.target.value;
+  const handleThemeChange = useCallback((themeOrEvent: string | React.ChangeEvent<HTMLSelectElement>): void => {
+    const newTheme = typeof themeOrEvent === 'string' ? themeOrEvent : themeOrEvent.target.value;
     setSelectedTheme(newTheme);
     
     // Update all slideshow blocks with the new theme
