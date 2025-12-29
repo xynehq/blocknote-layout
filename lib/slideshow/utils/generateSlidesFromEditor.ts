@@ -40,7 +40,8 @@ const parseWhiteboardData = (data: string | object | null): { elements: any[]; a
 };
 
 // Maximum visual weight per slide (replaces simple block count)
-const MAX_WEIGHT_PER_SLIDE = 20;
+// Set to 25 to balance content density and prevent overflow
+const MAX_WEIGHT_PER_SLIDE = 25;
 
 // Estimate the visual "weight" of a block based on content and nesting
 const estimateBlockWeight = (block: any): number => {
@@ -64,8 +65,14 @@ const estimateBlockWeight = (block: any): number => {
     return 0;
   }
 
-  // Block type multipliers (only for non-heading blocks)
+  // Block type multipliers
   let typeMultiplier = 1;
+  const mediaTypes = ['image', 'video'];
+
+  if (mediaTypes.includes(block.type)) {
+    return 8; // Media takes significant visual space
+  }
+
   if (block.type === 'code' || block.type === 'table') {
     typeMultiplier = 1.5; // Code and tables take more space
   }
@@ -97,9 +104,15 @@ const isEmptyBlock = (block: any): boolean => {
     return false;
   }
 
+  // Media blocks are never empty
+  const mediaTypes = ['image', 'video'];
+  if (mediaTypes.includes(block.type)) {
+    return false;
+  }
+
   // Check text content from DOM for regular blocks
   const text = block._domElement?.textContent?.trim() || '';
-  return text === '';
+  return text === '' && !block._domElement?.querySelector('img, video, .bn-image, .bn-video, [data-content-type="image"], [data-content-type="video"]');
 };
 
 // Check if a slide (array of blocks) contains only empty blocks
@@ -193,15 +206,27 @@ const splitByHeadings = (blocks: any[]): any[][] => {
 
     // Split on H1 or H2 (depending on splitLevel), but NOT on H3
     if (level === splitLevel && i > 0) {
-      // Only split if current section has content (not just headings)
-      // This prevents slides with a single heading
-      const hasContent = current.some(b => getHeadingLevel(b) === 0);
+      // MEDIA AWARE SPLIT: If the current slide only has media blocks, 
+      // let the heading join them instead of splitting. 
+      // This enables [Image] -> [Heading] -> [Text] to be on one split slide.
+      const isMedia = (b: any) => ['image', 'video'].includes(b.type) ||
+        b._domElement?.querySelector('img, video, .bn-image, .bn-video, .bn-visual-attachment');
 
-      if (hasContent && current.length > 0) {
+      const onlyMediaSoFar = current.length > 0 && current.every(isMedia);
+
+      if (onlyMediaSoFar) {
+        current.push(block);
+        continue;
+      }
+
+      // Only split if current section has text content (not just headings/media)
+      const hasTextContent = current.some(b => getHeadingLevel(b) === 0 && !isMedia(b));
+
+      if (hasTextContent && current.length > 0) {
         sections.push(current);
         current = [block];
       } else {
-        // No content yet, keep accumulating (heading + subheadings)
+        // No text content yet, keep accumulating
         current.push(block);
       }
     } else {
@@ -233,6 +258,32 @@ const splitLongSection = (blocks: any[]): any[][] => {
 
     // Would adding this block exceed the threshold?
     if (currentWeight + blockWeight > MAX_WEIGHT_PER_SLIDE) {
+      // Improved bidirectional sticky logic: 
+      // Media wants to be with text, and text wants to be with media to enable the split layout.
+
+      const isMedia = block.type === 'image' || block.type === 'video' ||
+        block._domElement?.querySelector('img, video, .bn-image, .bn-video, .bn-visual-attachment, .bn-video-embed');
+
+      const hasTextInCurrent = currentSlide.some(b => !['image', 'video', 'whiteboard'].includes(b.type));
+      const hasOnlyMediaInCurrent = currentSlide.length > 0 && currentSlide.every(b => {
+        return ['image', 'video'].includes(b.type) ||
+          b._domElement?.querySelector('img, video, .bn-image, .bn-video, .bn-visual-attachment');
+      });
+
+      // Scenario 1: Media follows text -> pull media into current slide
+      if (isMedia && hasTextInCurrent && currentWeight + blockWeight < MAX_WEIGHT_PER_SLIDE * 1.8) {
+        currentSlide.push(block);
+        currentWeight += blockWeight;
+        continue;
+      }
+
+      // Scenario 2: Text follows media -> pull text into current slide containing only media
+      if (!isMedia && hasOnlyMediaInCurrent && block.type !== 'whiteboard' && currentWeight + blockWeight < MAX_WEIGHT_PER_SLIDE * 1.8) {
+        currentSlide.push(block);
+        currentWeight += blockWeight;
+        continue;
+      }
+
       // Check if this block can fit on its own slide
       if (blockWeight <= MAX_WEIGHT_PER_SLIDE) {
         // YES - Move entire block to next slide (don't cut it)
@@ -353,6 +404,20 @@ export const generateSlidesFromBlocks = async (editor: BlockNoteEditor<any, any,
         type = 'mermaid';
         blockContent = mermaidWrapper;
       }
+
+      // Final fallback for images/videos that might not have the data attribute on first child
+      if (type === 'paragraph') {
+        const inner = domElement.querySelector('[data-content-type]');
+        if (inner) {
+          type = inner.getAttribute('data-content-type') || 'paragraph';
+        }
+      }
+
+      // Broad detection for media based on elements and common classes
+      if (type === 'paragraph' || type === 'image' || type === 'video') {
+        if (domElement.querySelector('img, .bn-image, [data-content-type="image"], .bn-visual-attachment')) type = 'image';
+        else if (domElement.querySelector('video, .bn-video, .bn-video-embed, [data-content-type="video"]')) type = 'video';
+      }
     }
 
     // Extract additional props based on block type
@@ -398,8 +463,8 @@ export const generateSlidesFromBlocks = async (editor: BlockNoteEditor<any, any,
     docContent.push(blockData);
   });
 
-  // Filter out slideshow blocks
-  let allBlocks = docContent.filter((b: any) => b.type !== 'slideshow');
+  // Filter out slideshow, audio, and file blocks
+  let allBlocks = docContent.filter((b: any) => !['slideshow', 'audio', 'file'].includes(b.type));
 
   // Skip leading empty blocks to prevent blank first slide
   let firstNonEmptyIndex = 0;
@@ -455,34 +520,96 @@ export const generateSlidesFromBlocks = async (editor: BlockNoteEditor<any, any,
       };
     }
 
-    // Otherwise, build HTML slide
+    // Identify which blocks are media (attachments)
+    const mediaTypes = ['image', 'video'];
+    const mediaBlocks = slideBlocks.filter(b => {
+      // Primary check: Block type
+      if (mediaTypes.includes(b.type)) return true;
+
+      // Secondary check: DOM structure (catches images/videos missed by type check)
+      const dom = b._domElement;
+      if (!dom) return false;
+
+      return dom.querySelector('img, video, .bn-image, .bn-video, .bn-visual-attachment, .bn-video-embed, [data-content-type="image"], [data-content-type="video"]');
+    });
+
+    const textBlocks = slideBlocks.filter(b => {
+      // If it's identified as media, it's not text
+      if (mediaBlocks.includes(b)) return false;
+      if (b.type === 'whiteboard') return false;
+
+      // Check for content or specific block types that count as "text"
+      const text = b._domElement?.textContent?.trim() || '';
+      return text.length > 0 || ['heading', 'table', 'code', 'mermaid'].includes(b.type);
+    });
+
+    // Build HTML slide
     const slideDiv = document.createElement('div');
     slideDiv.className = 'bn-slide-content';
 
-    for (const block of slideBlocks) {
-      // Skip whiteboards in mixed slides (they get their own slide above)
-      if (block.type === 'whiteboard') continue;
+    // TRIGGER SPLIT LAYOUT: If we have both media and text on this slide, put them side-by-side
+    if (mediaBlocks.length > 0 && textBlocks.length > 0) {
+      slideDiv.classList.add('bn-slide-layout-split');
 
-      const domElement = block._domElement;
+      const leftCol = document.createElement('div');
+      leftCol.className = 'bn-slide-layout-left';
 
-      if (domElement) {
-        // Clone the actual DOM element (preserves nested lists, mermaid, etc.)
-        const clone = domElement.cloneNode(true) as HTMLElement;
+      const rightCol = document.createElement('div');
+      rightCol.className = 'bn-slide-layout-right bn-media-container';
 
-        // Clean up editor-specific attributes and elements
-        clone.removeAttribute('contenteditable');
-        clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
-        clone.querySelectorAll('.bn-block-handle, .bn-add-block-button, .bn-drag-handle').forEach(el => el.remove());
+      // Process text blocks for the left column
+      for (const block of textBlocks) {
+        const domElement = block._domElement;
+        if (domElement) {
+          const clone = domElement.cloneNode(true) as HTMLElement;
+          cleanupClone(clone);
+          leftCol.appendChild(clone);
+        }
+      }
 
-        slideDiv.appendChild(clone);
+      // Process media blocks for the right column
+      for (const block of mediaBlocks) {
+        const domElement = block._domElement;
+        if (domElement) {
+          const clone = domElement.cloneNode(true) as HTMLElement;
+          cleanupClone(clone);
+          rightCol.appendChild(clone);
+        }
+      }
+
+      slideDiv.appendChild(leftCol);
+      slideDiv.appendChild(rightCol);
+    } else {
+      // Default vertical layout
+      for (const block of slideBlocks) {
+        // Skip whiteboards in mixed slides (they get their own slide above)
+        if (block.type === 'whiteboard') continue;
+
+        const domElement = block._domElement;
+
+        if (domElement) {
+          // Clone the actual DOM element (preserves nested lists, mermaid, etc.)
+          const clone = domElement.cloneNode(true) as HTMLElement;
+          cleanupClone(clone);
+          slideDiv.appendChild(clone);
+        }
       }
     }
 
     return {
       type: 'html' as const,
-      content: slideDiv.innerHTML || '<p>Empty slide</p>',
+      content: slideDiv.outerHTML || '<p>Empty slide</p>',
     };
+
   });
+
+  function cleanupClone(clone: HTMLElement) {
+    // Clean up editor-specific attributes and elements
+    clone.removeAttribute('contenteditable');
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelectorAll('.bn-block-handle, .bn-add-block-button, .bn-drag-handle').forEach(el => el.remove());
+  }
 
   return slides;
 };
+
