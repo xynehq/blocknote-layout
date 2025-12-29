@@ -60,18 +60,48 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
         };
     }, [data, themeSettings.excalidrawTheme]);
 
-    // Handle Excalidraw initialization and scroll to content
+    // Handle Excalidraw initialization - zoom to readable level from top-left
     const handleExcalidrawMount = useCallback((api: any) => {
         excalidrawAPIRef.current = api;
 
-        // Wait a bit for the canvas to be ready, then scroll to content
+        // Wait a bit for the canvas to be ready, then position and zoom content
         setTimeout(() => {
             if (api && api.scrollToContent) {
-                api.scrollToContent(initialData.elements, {
+                const elements = initialData.elements;
+
+                // First, scroll to content to center it
+                api.scrollToContent(elements, {
                     fitToContent: true,
                     animate: false,
                     duration: 0,
                 });
+
+                // Get current zoom after fit-to-content
+                const appState = api.getAppState();
+                const currentZoom = appState?.zoom?.value || 1;
+
+                // If zoom is too small (content is very large), set a minimum readable zoom
+                // and position from the top-left corner instead of centering
+                const MIN_READABLE_ZOOM = 0.7; // 70% zoom minimum for readability
+
+                if (currentZoom < MIN_READABLE_ZOOM) {
+                    // Calculate the bounding box of all elements
+                    let minX = Infinity, minY = Infinity;
+                    for (const el of elements) {
+                        if (el.x < minX) minX = el.x;
+                        if (el.y < minY) minY = el.y;
+                    }
+
+                    // Set zoom to readable level and scroll to top-left of content
+                    api.updateScene({
+                        appState: {
+                            ...appState,
+                            zoom: { value: MIN_READABLE_ZOOM },
+                            scrollX: -minX + 50, // Add some padding from the left
+                            scrollY: -minY + 50, // Add some padding from the top
+                        },
+                    });
+                }
             }
             setIsReady(true);
         }, 150);
@@ -110,7 +140,7 @@ export const WhiteboardSlide: React.FC<WhiteboardSlideProps> = ({
                     key={theme} // Force remount when theme changes to correctly apply dark/light mode
                     initialData={initialData}
                     viewModeEnabled={true}
-                    zenModeEnabled={true}
+                    zenModeEnabled={false}
                     gridModeEnabled={false}
                     renderTopRightUI={() => null}
                     excalidrawAPI={handleExcalidrawMount}
