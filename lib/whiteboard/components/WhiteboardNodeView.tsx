@@ -12,13 +12,26 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
     const { node, updateAttributes } = props;
     const [titleValue, setTitleValue] = useState(node.attrs.title || 'Untitled Whiteboard');
     const [isExpanded, setIsExpanded] = useState(false);
-    const [isCollapsed, setIsCollapsed] = useState(true);
+    // Read collapsed state from node attributes to persist across drag-drop
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        const collapsed = node.attrs.collapsed;
+        return collapsed === 'true' || collapsed === true || collapsed === undefined;
+    });
     const [fontsLoaded, setFontsLoaded] = useState(false);
     const [previewKey, setPreviewKey] = useState(0);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isInitialLoadRef = useRef(true);
     const previewExcalidrawRef = useRef<any>(null);
     const editorExcalidrawRef = useRef<any>(null);
+
+    // Track pending data for flush on unmount - CRITICAL for drag/drop
+    const pendingDataRef = useRef<string | null>(null);
+    const updateAttributesRef = useRef(updateAttributes);
+
+    // Keep updateAttributes ref in sync
+    useEffect(() => {
+        updateAttributesRef.current = updateAttributes;
+    }, [updateAttributes]);
 
     // Detect if mobile
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -103,36 +116,43 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         };
         const typedElements = elements as Array<{ isDeleted?: boolean }>;
 
+        // Prepare data to save
+        const dataToSave = {
+            elements: typedElements, // Save all elements including deleted ones
+            appState: {
+                viewBackgroundColor: typedAppState.viewBackgroundColor,
+                currentItemFontFamily: typedAppState.currentItemFontFamily,
+                currentItemFontSize: typedAppState.currentItemFontSize,
+                currentItemStrokeWidth: typedAppState.currentItemStrokeWidth,
+                zoom: typedAppState.zoom,
+                scrollX: typedAppState.scrollX,
+                scrollY: typedAppState.scrollY
+            }
+        };
+
+        // Store pending data IMMEDIATELY for flush on unmount (before debounce)
+        // This is CRITICAL for preserving data when block is dragged/repositioned
+        const serializedData = JSON.stringify(dataToSave);
+        pendingDataRef.current = serializedData;
+
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
         }
 
         debounceTimerRef.current = setTimeout(() => {
-            if (updateAttributes) {
+            if (updateAttributesRef.current) {
                 try {
-                    // Save elements exactly as they are - don't filter or transform
-                    const dataToSave = {
-                        elements: typedElements, // Save all elements including deleted ones
-                        appState: {
-                            viewBackgroundColor: typedAppState.viewBackgroundColor,
-                            currentItemFontFamily: typedAppState.currentItemFontFamily,
-                            currentItemFontSize: typedAppState.currentItemFontSize,
-                            currentItemStrokeWidth: typedAppState.currentItemStrokeWidth,
-                            zoom: typedAppState.zoom,
-                            scrollX: typedAppState.scrollX,
-                            scrollY: typedAppState.scrollY
-                        }
-                    };
-
-                    updateAttributes({
-                        data: JSON.stringify(dataToSave),
+                    updateAttributesRef.current({
+                        data: serializedData,
                     });
+                    // Clear pending data after successful save
+                    pendingDataRef.current = null;
                 } catch (e) {
-                    // Fail silently
+                    // Fail silently - data remains in pendingDataRef for potential retry
                 }
             }
         }, 800);
-    }, [updateAttributes, isMobile]);
+    }, [isMobile]);
 
     // Font loading - CRITICAL to prevent element shifting
     useEffect(() => {
@@ -216,9 +236,26 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
 
         return (): void => {
             clearTimeout(timer);
+
+            // CRITICAL: Flush any pending data before unmount
+            // This preserves whiteboard content when block is dragged/repositioned
             if (debounceTimerRef.current) {
                 clearTimeout(debounceTimerRef.current);
+                debounceTimerRef.current = null;
             }
+
+            // If there's pending data that wasn't saved, save it now
+            if (pendingDataRef.current && updateAttributesRef.current) {
+                try {
+                    updateAttributesRef.current({
+                        data: pendingDataRef.current,
+                    });
+                    pendingDataRef.current = null;
+                } catch (e) {
+                    console.error('WhiteboardNodeView: failed to flush pending data on unmount', e);
+                }
+            }
+
             if (style.parentNode) {
                 document.head.removeChild(style);
             }
@@ -343,7 +380,14 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                     onTitleBlur={handleTitleBlur}
                     onExpand={() => setIsExpanded(true)}
                     isCollapsed={isCollapsed}
-                    onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+                    onToggleCollapse={() => {
+                        const newCollapsed = !isCollapsed;
+                        setIsCollapsed(newCollapsed);
+                        // Persist to node attributes so it survives drag-drop
+                        if (updateAttributes) {
+                            updateAttributes({ collapsed: newCollapsed ? 'true' : 'false' });
+                        }
+                    }}
                 />
 
                 {!isCollapsed && (

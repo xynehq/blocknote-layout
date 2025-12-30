@@ -23,6 +23,9 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
   const deckRef = useRef<Reveal.Api | null>(null);
   const scrollPositionRef = useRef<number>(0);
 
+  // Track active slide index
+  const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
+
   // Auto-scale slide content to fit within the slide
   const autoScaleSlides = useCallback(() => {
     if (!revealRef.current) return;
@@ -88,6 +91,11 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
       setTimeout(() => {
         autoScaleSlides();
       }, 100);
+
+      // Update index immediately after init
+      if (deck) {
+        setCurrentSlideIndex(deck.getIndices().h);
+      }
     }).catch((err) => {
       console.error('Reveal.js initialization failed:', err);
     });
@@ -97,6 +105,10 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
     // Re-scale on slide change in case of lazy loading
     deck.on('slidechanged', () => {
       autoScaleSlides();
+      // Update index on slide change
+      if (deck) {
+        setCurrentSlideIndex(deck.getIndices().h);
+      }
     });
 
     // Request fullscreen
@@ -173,6 +185,7 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
             data={slide.data}
             title={slide.title}
             theme={theme}
+            isActive={index === currentSlideIndex}
           />
         </section>
       );

@@ -31,6 +31,13 @@ export const Whiteboard = Node.create({
                     "data-settings": attributes.settings as string,
                 }),
             },
+            collapsed: {
+                default: "true",
+                parseHTML: (element) => element.getAttribute("data-collapsed") || "true",
+                renderHTML: (attributes) => ({
+                    "data-collapsed": attributes.collapsed as string,
+                }),
+            },
         };
     },
 
@@ -42,9 +49,16 @@ export const Whiteboard = Node.create({
         ];
     },
 
-    renderHTML() {
+    renderHTML({ HTMLAttributes }) {
         const div = document.createElement('div');
         div.setAttribute('data-content-type', 'whiteboard');
+        // CRITICAL: Apply all HTMLAttributes (including data-wb-data with whiteboard content)
+        // Without this, attributes are lost during drag-drop serialization
+        for (const [attribute, value] of Object.entries(HTMLAttributes)) {
+            if (value !== null && value !== undefined) {
+                div.setAttribute(attribute, value as string);
+            }
+        }
         return {
             dom: div,
             contentDOM: undefined,

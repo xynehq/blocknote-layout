@@ -18,5 +18,8 @@ export const WhiteboardBlock = createBlockSpecFromTiptapNode(
         settings: {
             default: "{}",
         },
+        collapsed: {
+            default: "true",
+        },
     },
 );
