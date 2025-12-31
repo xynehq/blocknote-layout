@@ -56,7 +56,16 @@ export {
     getGeniusSlashMenuItems,
     insertGenius,
     configureGeniusNodeView,
+    GeniusNodeViewBase,
+    configureGeniusNodeViewConfig,
+    getGeniusNodeViewConfig,
 } from "./genius/main.js";
 
-export type { GeniusNodeViewProps } from "./genius/main.js";
+export type {
+    GeniusNodeViewProps,
+    GeniusNodeViewBaseProps,
+    GeniusNodeViewConfig,
+    GeniusSubmitResult,
+    ToolOutputRendererProps,
+} from "./genius/main.js";
 
