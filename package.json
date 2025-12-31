@@ -52,6 +52,10 @@
     "./whiteboard": {
       "types": "./dist/whiteboard/main.d.ts",
       "import": "./dist/whiteboard/main.js"
+    },
+    "./genius": {
+      "types": "./dist/genius/main.d.ts",
+      "import": "./dist/genius/main.js"
     }
   },
   "files": [

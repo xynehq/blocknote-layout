@@ -1,0 +1,159 @@
+.genius-block-wrapper {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 8px 0;
+    background: transparent;
+    overflow: hidden;
+    user-select: text;
+}
+
+.genius-block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: transparent;
+}
+
+.genius-block-icon-svg {
+    color: #0ea5e9;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.genius-block-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+}
+
+.genius-block-content {
+    padding: 0 12px 12px 12px;
+    user-select: text;
+}
+
+.genius-block-description {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.genius-block-text-content {
+    margin-bottom: 12px;
+}
+
+/* Remove default BlockNote styling for nested editor */
+.genius-block-text-content .bn-editor {
+    padding: 0 !important;
+    background: transparent !important;
+    min-height: unset !important;
+}
+
+.genius-block-text-content .bn-container {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.genius-block-text-content .bn-main-content {
+    padding: 0 !important;
+}
+
+.genius-block-text-content .bn-editor-content {
+    min-height: unset !important;
+}
+
+/* Input mode styles */
+.genius-block-input-area {
+    padding: 12px;
+}
+
+.genius-block-textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    background: #fff;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.genius-block-textarea:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.genius-block-textarea:disabled {
+    background: #f9fafb;
+    cursor: not-allowed;
+}
+
+.genius-block-textarea::placeholder {
+    color: #9ca3af;
+}
+
+.genius-block-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.genius-block-error {
+    font-size: 12px;
+    color: #ef4444;
+    flex: 1;
+}
+
+.genius-block-submit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.genius-block-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    transform: translateY(-1px);
+}
+
+.genius-block-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.genius-block-outputs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.genius-block-output-item {
+    padding: 0;
+}
+
+.genius-block-empty {
+    padding: 16px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+}
