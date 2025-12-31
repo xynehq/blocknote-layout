@@ -7,6 +7,7 @@ export const GeniusBlock = createBlockSpecFromTiptapNode(
         node: Genius as unknown as Node,
         type: "genius",
         content: "none",
+        isInGroup: false,
     },
     {
         title: {
