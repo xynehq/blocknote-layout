@@ -138,18 +138,28 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
             }
         };
 
+        // Store pending data IMMEDIATELY for flush on unmount (before debounce)
+        // This is CRITICAL for preserving data when block is dragged/repositioned
         const serializedData = JSON.stringify(dataToSave);
-        
-        if (updateAttributesRef.current) {
-            try {
-                updateAttributesRef.current({
-                    data: serializedData,
-                });
-                pendingDataRef.current = null;
-            } catch (e) {
-                pendingDataRef.current = serializedData;
-            }
+        pendingDataRef.current = serializedData;
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
         }
+
+        debounceTimerRef.current = setTimeout(() => {
+            if (updateAttributesRef.current) {
+                try {
+                    updateAttributesRef.current({
+                        data: serializedData,
+                    });
+                    // Clear pending data after successful save
+                    pendingDataRef.current = null;
+                } catch (e) {
+                    // Fail silently - data remains in pendingDataRef for potential retry
+                }
+            }
+        }, 800);
     }, [isMobile]);
 
     // Font loading - CRITICAL to prevent element shifting
