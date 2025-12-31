@@ -138,28 +138,18 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
             }
         };
 
-        // Store pending data IMMEDIATELY for flush on unmount (before debounce)
-        // This is CRITICAL for preserving data when block is dragged/repositioned
         const serializedData = JSON.stringify(dataToSave);
-        pendingDataRef.current = serializedData;
-
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-
-        debounceTimerRef.current = setTimeout(() => {
-            if (updateAttributesRef.current) {
-                try {
-                    updateAttributesRef.current({
-                        data: serializedData,
-                    });
-                    // Clear pending data after successful save
-                    pendingDataRef.current = null;
-                } catch (e) {
-                    // Fail silently - data remains in pendingDataRef for potential retry
-                }
+        
+        if (updateAttributesRef.current) {
+            try {
+                updateAttributesRef.current({
+                    data: serializedData,
+                });
+                pendingDataRef.current = null;
+            } catch (e) {
+                pendingDataRef.current = serializedData;
             }
-        }, 800);
+        }
     }, [isMobile]);
 
     // Font loading - CRITICAL to prevent element shifting
@@ -200,6 +190,37 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
 
         loadFonts();
     }, []);
+
+    // Sync remote changes to Excalidraw editor and preview
+    useEffect(() => {
+        if (isInitialLoadRef.current || !initialData) {
+            return;
+        }
+
+        // Update editor Excalidraw with new data from remote collaborators
+        if (editorExcalidrawRef.current) {
+            try {
+                editorExcalidrawRef.current.updateScene({
+                    elements: initialData.elements,
+                    appState: initialData.appState,
+                });
+            } catch (e) {
+                // Silently fail - might happen if editor is not fully initialized
+            }
+        }
+
+        // Update preview Excalidraw with new data from remote collaborators
+        if (previewExcalidrawRef.current) {
+            try {
+                previewExcalidrawRef.current.updateScene({
+                    elements: initialData.elements,
+                    appState: initialData.appState,
+                });
+            } catch (e) {
+                // Silently fail - might happen if preview is not fully initialized
+            }
+        }
+    }, [initialData]);
 
     // Initial load timer & Global UI cleanup
     useEffect(() => {
