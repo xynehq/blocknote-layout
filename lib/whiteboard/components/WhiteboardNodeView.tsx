@@ -124,7 +124,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         };
         const typedElements = elements as Array<{ isDeleted?: boolean }>;
 
-        // Prepare data to save
+        // Prepare data to save - excluding viewport (zoom/scroll) for independent user navigation
         const dataToSave = {
             elements: typedElements, // Save all elements including deleted ones
             appState: {
@@ -132,9 +132,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                 currentItemFontFamily: typedAppState.currentItemFontFamily,
                 currentItemFontSize: typedAppState.currentItemFontSize,
                 currentItemStrokeWidth: typedAppState.currentItemStrokeWidth,
-                zoom: typedAppState.zoom,
-                scrollX: typedAppState.scrollX,
-                scrollY: typedAppState.scrollY
+                // Don't save zoom, scrollX, scrollY - let each user navigate independently
             }
         };
 
@@ -208,6 +206,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         }
 
         // Update editor Excalidraw with new data from remote collaborators
+        // Don't sync viewport - let each user navigate independently
         if (editorExcalidrawRef.current) {
             try {
                 editorExcalidrawRef.current.updateScene({
@@ -368,17 +367,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                             viewModeEnabled={isMobile}
                             excalidrawAPI={(api) => {
                                 editorExcalidrawRef.current = api;
-                                // Auto-scroll to content when editor opens
-                                setTimeout(() => {
-                                    const elements = initialData?.elements;
-                                    if (api && api.scrollToContent && elements && elements.length > 0) {
-                                        api.scrollToContent(elements, {
-                                            fitToContent: true,
-                                            animate: false,
-                                            duration: 0,
-                                        });
-                                    }
-                                }, 150);
+                                // Don't auto-center - use the saved scroll/zoom from appState for consistent multi-user view
                             }}
                             UIOptions={{
                                 canvasActions: {
