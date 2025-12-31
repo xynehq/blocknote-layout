@@ -18,11 +18,6 @@ function insertGenius<
         editor as unknown as BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>,
         { type: "genius" },
     );
-
-    const currentBlock = editor.getTextCursorPosition().block;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    editor.insertBlocks([{ type: "paragraph" as any }], currentBlock as any, "after");
 }
 
 export function getGeniusSlashMenuItems<
