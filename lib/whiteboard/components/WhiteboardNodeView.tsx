@@ -206,12 +206,18 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         }
 
         // Update editor Excalidraw with new data from remote collaborators
-        // Don't sync viewport - let each user navigate independently
+        // Preserve current viewport - don't change zoom/scroll on remote updates
         if (editorExcalidrawRef.current) {
             try {
+                const currentState = editorExcalidrawRef.current.getAppState();
                 editorExcalidrawRef.current.updateScene({
                     elements: initialData.elements,
-                    appState: initialData.appState,
+                    appState: {
+                        ...initialData.appState,
+                        zoom: currentState.zoom,
+                        scrollX: currentState.scrollX,
+                        scrollY: currentState.scrollY,
+                    },
                 });
             } catch (e) {
                 // Silently fail - might happen if editor is not fully initialized
@@ -219,11 +225,18 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         }
 
         // Update preview Excalidraw with new data from remote collaborators
+        // Preserve current viewport - don't change zoom/scroll on remote updates
         if (previewExcalidrawRef.current) {
             try {
+                const currentState = previewExcalidrawRef.current.getAppState();
                 previewExcalidrawRef.current.updateScene({
                     elements: initialData.elements,
-                    appState: initialData.appState,
+                    appState: {
+                        ...initialData.appState,
+                        zoom: currentState.zoom,
+                        scrollX: currentState.scrollX,
+                        scrollY: currentState.scrollY,
+                    },
                 });
             } catch (e) {
                 // Silently fail - might happen if preview is not fully initialized
@@ -367,7 +380,17 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                             viewModeEnabled={isMobile}
                             excalidrawAPI={(api) => {
                                 editorExcalidrawRef.current = api;
-                                // Don't auto-center - use the saved scroll/zoom from appState for consistent multi-user view
+                                // Auto-center content when editor opens for each user independently
+                                setTimeout(() => {
+                                    const elements = initialData?.elements;
+                                    if (api && api.scrollToContent && elements && elements.length > 0) {
+                                        api.scrollToContent(elements, {
+                                            fitToContent: true,
+                                            animate: false,
+                                            duration: 0,
+                                        });
+                                    }
+                                }, 150);
                             }}
                             UIOptions={{
                                 canvasActions: {
