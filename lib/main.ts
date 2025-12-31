@@ -68,4 +68,18 @@ export {
     WhiteboardNodeView,
 } from "./whiteboard/main.js";
 
+// Genius exports
+export {
+    Genius,
+    GeniusBlock,
+    geniusBlockSpecs,
+    createGeniusSchema,
+    withGenius,
+    geniusSchema,
+    getGeniusSlashMenuItems,
+    insertGenius,
+    configureGeniusNodeView,
+} from "./genius/main.js";
+
+export type { GeniusNodeViewProps } from "./genius/main.js";
 
