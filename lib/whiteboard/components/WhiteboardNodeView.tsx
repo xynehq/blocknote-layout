@@ -10,13 +10,13 @@ import "./styles.css";
 
 export const WhiteboardNodeView = (props: NodeViewProps) => {
     const { node, updateAttributes } = props;
-    const [titleValue, setTitleValue] = useState(node.attrs.title || 'Untitled Whiteboard');
+    
+    // Extract attribute values directly to ensure React tracks changes for collaboration
+    const titleAttr = (node.attrs.title as string) || 'Untitled Whiteboard';
+    const collapsedAttr = node.attrs.collapsed;
+    const isCollapsedValue = collapsedAttr === 'true' || collapsedAttr === true || collapsedAttr === undefined;
+    
     const [isExpanded, setIsExpanded] = useState(false);
-    // Read collapsed state from node attributes to persist across drag-drop
-    const [isCollapsed, setIsCollapsed] = useState(() => {
-        const collapsed = node.attrs.collapsed;
-        return collapsed === 'true' || collapsed === true || collapsed === undefined;
-    });
     const [fontsLoaded, setFontsLoaded] = useState(false);
     const [previewKey, setPreviewKey] = useState(0);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -36,12 +36,16 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
     // Detect if mobile
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
+    // Extract data attribute directly for proper reactivity
+    const dataAttr = (node.attrs.data as string) || '{}';
+
     // Parse existing data - CRITICAL: Don't use convertToExcalidrawElements as it mutates positions
+    // Use dataAttr instead of node.attrs.data for proper reactivity with Yjs
     const initialData = useMemo(() => {
         try {
-            const parsed = typeof node.attrs.data === 'string'
-                ? JSON.parse(node.attrs.data)
-                : node.attrs.data;
+            const parsed = typeof dataAttr === 'string'
+                ? JSON.parse(dataAttr)
+                : dataAttr;
 
             if (parsed && (parsed.elements || parsed.appState)) {
                 // Return elements as-is, don't convert - conversion causes position drift
@@ -62,20 +66,24 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
             console.error('WhiteboardNodeView: error parsing initial data', e);
         }
         return null;
-    }, [node.attrs.data]);
+    }, [dataAttr]);
+
+    // Handle title change - update attributes directly for collaboration
+    const handleTitleChange = useCallback((newTitle: string) => {
+        if (updateAttributes) {
+            updateAttributes({ title: newTitle });
+        }
+    }, [updateAttributes]);
 
     // Handle title blur
     const handleTitleBlur = useCallback(() => {
-        if (titleValue.trim() === '') {
+        if (titleAttr.trim() === '') {
             const defaultTitle = 'Untitled Whiteboard';
-            setTitleValue(defaultTitle);
             if (updateAttributes) {
                 updateAttributes({ title: defaultTitle });
             }
-        } else if (updateAttributes) {
-            updateAttributes({ title: titleValue });
         }
-    }, [titleValue, updateAttributes]);
+    }, [titleAttr, updateAttributes]);
 
     // Handle preview Excalidraw initialization - center and zoom to fit content
     const handlePreviewMount = useCallback((api: any) => {
@@ -116,7 +124,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
         };
         const typedElements = elements as Array<{ isDeleted?: boolean }>;
 
-        // Prepare data to save
+        // Prepare data to save - excluding viewport (zoom/scroll) for independent user navigation
         const dataToSave = {
             elements: typedElements, // Save all elements including deleted ones
             appState: {
@@ -124,9 +132,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                 currentItemFontFamily: typedAppState.currentItemFontFamily,
                 currentItemFontSize: typedAppState.currentItemFontSize,
                 currentItemStrokeWidth: typedAppState.currentItemStrokeWidth,
-                zoom: typedAppState.zoom,
-                scrollX: typedAppState.scrollX,
-                scrollY: typedAppState.scrollY
+                // Don't save zoom, scrollX, scrollY - let each user navigate independently
             }
         };
 
@@ -192,6 +198,51 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
 
         loadFonts();
     }, []);
+
+    // Sync remote changes to Excalidraw editor and preview
+    useEffect(() => {
+        if (isInitialLoadRef.current || !initialData) {
+            return;
+        }
+
+        // Update editor Excalidraw with new data from remote collaborators
+        // Preserve current viewport - don't change zoom/scroll on remote updates
+        if (editorExcalidrawRef.current) {
+            try {
+                const currentState = editorExcalidrawRef.current.getAppState();
+                editorExcalidrawRef.current.updateScene({
+                    elements: initialData.elements,
+                    appState: {
+                        ...initialData.appState,
+                        zoom: currentState.zoom,
+                        scrollX: currentState.scrollX,
+                        scrollY: currentState.scrollY,
+                    },
+                });
+            } catch (e) {
+                // Silently fail - might happen if editor is not fully initialized
+            }
+        }
+
+        // Update preview Excalidraw with new data from remote collaborators
+        // Preserve current viewport - don't change zoom/scroll on remote updates
+        if (previewExcalidrawRef.current) {
+            try {
+                const currentState = previewExcalidrawRef.current.getAppState();
+                previewExcalidrawRef.current.updateScene({
+                    elements: initialData.elements,
+                    appState: {
+                        ...initialData.appState,
+                        zoom: currentState.zoom,
+                        scrollX: currentState.scrollX,
+                        scrollY: currentState.scrollY,
+                    },
+                });
+            } catch (e) {
+                // Silently fail - might happen if preview is not fully initialized
+            }
+        }
+    }, [initialData]);
 
     // Initial load timer & Global UI cleanup
     useEffect(() => {
@@ -289,7 +340,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                         <span>Close</span>
                     </button>
                     <div className="whiteboard-modal-breadcrumbs">
-                        <span>{titleValue}</span>
+                        <span>{titleAttr}</span>
                     </div>
                     {isMobile && (
                         <div style={{
@@ -322,14 +373,14 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                         <Excalidraw
                             initialData={initialData || undefined}
                             onChange={handleExcalidrawChange}
-                            name={titleValue}
+                            name={titleAttr}
                             renderTopRightUI={() => null}
-                            detectScroll={false}
+                            detectScroll={true}
                             handleKeyboardGlobally={true}
                             viewModeEnabled={isMobile}
                             excalidrawAPI={(api) => {
                                 editorExcalidrawRef.current = api;
-                                // Auto-scroll to content when editor opens
+                                // Auto-center content when editor opens for each user independently
                                 setTimeout(() => {
                                     const elements = initialData?.elements;
                                     if (api && api.scrollToContent && elements && elements.length > 0) {
@@ -373,16 +424,15 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
 
     return (
         <NodeViewWrapper>
-            <div className={`whiteboard-wrapper blocknote-whiteboard ${isCollapsed ? 'whiteboard-collapsed' : ''}`} data-content-type="whiteboard">
+            <div className={`whiteboard-wrapper blocknote-whiteboard ${isCollapsedValue ? 'whiteboard-collapsed' : ''}`} data-content-type="whiteboard">
                 <WhiteboardToolbar
-                    title={titleValue}
-                    setTitle={setTitleValue}
+                    title={titleAttr}
+                    setTitle={handleTitleChange}
                     onTitleBlur={handleTitleBlur}
                     onExpand={() => setIsExpanded(true)}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={isCollapsedValue}
                     onToggleCollapse={() => {
-                        const newCollapsed = !isCollapsed;
-                        setIsCollapsed(newCollapsed);
+                        const newCollapsed = !isCollapsedValue;
                         // Persist to node attributes so it survives drag-drop
                         if (updateAttributes) {
                             updateAttributes({ collapsed: newCollapsed ? 'true' : 'false' });
@@ -390,7 +440,7 @@ export const WhiteboardNodeView = (props: NodeViewProps) => {
                     }}
                 />
 
-                {!isCollapsed && (
+                {!isCollapsedValue && (
                     <div className="whiteboard-preview-container" onClick={() => setIsExpanded(true)}>
                         <div className="whiteboard-preview-placeholder">
                             {fontsLoaded && (
