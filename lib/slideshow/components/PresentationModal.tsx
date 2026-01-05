@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import Reveal from "reveal.js";
 import "reveal.js/dist/reveal.css";
@@ -7,6 +7,7 @@ import "@blocknote/mantine/style.css";
 import { MdClose } from "react-icons/md";
 import { SlideContent } from "../utils/generateSlidesFromEditor.js";
 import { WhiteboardSlide } from "./WhiteboardSlide.js";
+import { ExpandedImageOverlay } from "./ExpandedImageOverlay.js";
 
 interface PresentationModalProps {
   slides: SlideContent[];
@@ -24,7 +25,10 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
   const scrollPositionRef = useRef<number>(0);
 
   // Track active slide index
-  const [currentSlideIndex, setCurrentSlideIndex] = React.useState(0);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  // Track state for expanded image
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   // Auto-scale slide content to fit within the slide
   const autoScaleSlides = useCallback(() => {
@@ -171,7 +175,29 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
         }, 50);
       });
     };
-  }, [onClose]);
+  }, [onClose, expandedImage]);
+
+  // Handle image clicks to open lightbox
+  useEffect(() => {
+    if (!revealRef.current) return;
+
+    const handleImageClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const imgElement = target as HTMLImageElement;
+        e.preventDefault();
+        e.stopPropagation();
+        setExpandedImage(imgElement.src);
+      }
+    };
+
+    const container = revealRef.current;
+    container.addEventListener('click', handleImageClick);
+    return () => container.removeEventListener('click', handleImageClick);
+  }, []);
+
+  // Lightbox close handler
+  const handleExpandedImageClose = useCallback(() => setExpandedImage(null), []);
 
   // Render a slide based on its type
   const renderSlide = (slide: SlideContent, index: number) => {
@@ -222,6 +248,14 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
           {slides.map((slide, index) => renderSlide(slide, index))}
         </div>
       </div>
+
+      {/* Image Lightbox Overlay */}
+      {expandedImage && (
+        <ExpandedImageOverlay
+          imageSrc={expandedImage}
+          onClose={handleExpandedImageClose}
+        />
+      )}
     </div>,
     document.body
   );
