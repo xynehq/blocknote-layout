@@ -92,18 +92,3 @@ export type {
     ToolOutputRendererProps,
 } from "./genius/main.js";
 
-// Mentions exports
-export {
-    mentionInlineContentSpec,
-    withMentions,
-    getMentionSuggestionMenuItems,
-    createMentionSuggestionMenuItems,
-} from "./mentions/main.js";
-
-export type {
-    MentionProps,
-    MentionInlineContentSchema,
-    User,
-    OnUserSearch,
-    GetMentionSuggestionMenuItemsOptions,
-} from "./mentions/main.js";
