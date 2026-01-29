@@ -36,6 +36,8 @@ export const mentionInlineContentSpec = createReactInlineContentSpec(
     },
     {
         render: (props) => {
+            // Access props via props.inlineContent.props according to BlockNote API
+            const username = props.inlineContent.props.username || "";
             return (
                 <span
                     style={{
@@ -46,7 +48,7 @@ export const mentionInlineContentSpec = createReactInlineContentSpec(
                         color: "#0066cc",
                     }}
                 >
-                    @{props.username}
+                    @{username}
                 </span>
             );
         },

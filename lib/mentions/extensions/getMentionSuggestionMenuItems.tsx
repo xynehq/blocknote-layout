@@ -59,6 +59,7 @@ function checkMentionInSchema<
 
 /**
  * Insert a mention inline content at the current cursor position
+ * Uses BlockNote's insertInlineContent API as per official documentation
  */
 function insertMention<
     BSchema extends BlockSchema,
@@ -75,10 +76,14 @@ function insertMention<
         userPicture: user.picture || "",
     };
 
-    editor.insertInlineContent({
-        type: "mention",
-        props: mentionProps,
-    });
+    // Use BlockNote's insertInlineContent API with array format
+    editor.insertInlineContent([
+        {
+            type: "mention" as const,
+            props: mentionProps,
+        } as any, // Type assertion needed due to generic schema constraints
+        " ", // Add a space after the mention for better UX
+    ]);
 }
 
 /**
