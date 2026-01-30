@@ -58,8 +58,16 @@ function checkMentionInSchema<
 }
 
 /**
- * Insert a mention inline content at the current cursor position
- * Uses BlockNote's insertInlineContent API as per official documentation
+ * Group type for group mention suggestions
+ */
+export interface Group {
+    id: string;
+    name: string;
+    alias?: string | null;
+}
+
+/**
+ * Insert a user mention inline content at the current cursor position
  */
 function insertMention<
     BSchema extends BlockSchema,
@@ -76,13 +84,42 @@ function insertMention<
         userPicture: user.picture || "",
     };
 
-    // Use BlockNote's insertInlineContent API with array format
     editor.insertInlineContent([
         {
             type: "mention" as const,
             props: mentionProps,
-        } as any, // Type assertion needed due to generic schema constraints
-        " ", // Add a space after the mention for better UX
+        } as any,
+        " ",
+    ]);
+}
+
+/**
+ * Insert a group mention inline content at the current cursor position.
+ * Backend should expand group to member user IDs when sending notifications.
+ */
+export function insertGroupMention<
+    BSchema extends BlockSchema,
+    ISchema extends InlineContentSchema,
+    SSchema extends StyleSchema,
+>(
+    editor: BlockNoteEditor<BSchema, ISchema, SSchema>,
+    group: Group
+): void {
+    const mentionProps: MentionProps = {
+        userId: "",
+        username: "",
+        userEmail: "",
+        userPicture: "",
+        groupId: group.id,
+        groupName: group.name,
+    };
+
+    editor.insertInlineContent([
+        {
+            type: "mention" as const,
+            props: mentionProps,
+        } as any,
+        " ",
     ]);
 }
 

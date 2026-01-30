@@ -98,12 +98,14 @@ export {
     withMentions,
     getMentionSuggestionMenuItems,
     createMentionSuggestionMenuItems,
+    insertGroupMention,
 } from "./mentions/main.js";
 
 export type {
     MentionProps,
     MentionInlineContentSchema,
     User,
+    Group,
     OnUserSearch,
     GetMentionSuggestionMenuItemsOptions,
 } from "./mentions/main.js";

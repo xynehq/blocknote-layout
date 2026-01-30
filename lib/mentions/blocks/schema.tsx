@@ -2,18 +2,21 @@ import { createReactInlineContentSpec } from "@blocknote/react";
 import { InlineContentSchema, StyleSchema } from "@blocknote/core";
 
 /**
- * Props for mention inline content
+ * Props for mention inline content (user or group)
  */
 export interface MentionProps {
     userId: string;
     username: string;
     userEmail: string;
     userPicture: string;
+    /** When set, this mention is a group mention; backend expands to member user IDs */
+    groupId?: string;
+    groupName?: string;
 }
 
 /**
  * Mention inline content spec
- * Renders as @username in the editor
+ * Renders as @username or @groupName (for group mentions)
  */
 export const mentionInlineContentSpec = createReactInlineContentSpec(
     {
@@ -31,13 +34,19 @@ export const mentionInlineContentSpec = createReactInlineContentSpec(
             userPicture: {
                 default: "",
             },
+            groupId: {
+                default: "",
+            },
+            groupName: {
+                default: "",
+            },
         },
         content: "none",
     },
     {
         render: (props) => {
-            // Access props via props.inlineContent.props according to BlockNote API
-            const username = props.inlineContent.props.username || "";
+            const p = props.inlineContent.props as MentionProps;
+            const displayName = (p.groupId && p.groupName) ? p.groupName : (p.username || "");
             return (
                 <span
                     style={{
@@ -48,7 +57,7 @@ export const mentionInlineContentSpec = createReactInlineContentSpec(
                         color: "#0066cc",
                     }}
                 >
-                    @{username}
+                    @{displayName}
                 </span>
             );
         },

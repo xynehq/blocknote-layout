@@ -12,10 +12,12 @@ export type {
 export {
     getMentionSuggestionMenuItems,
     createMentionSuggestionMenuItems,
+    insertGroupMention,
 } from "./extensions/getMentionSuggestionMenuItems.js";
 
 export type {
     User,
+    Group,
     OnUserSearch,
     GetMentionSuggestionMenuItemsOptions,
 } from "./extensions/getMentionSuggestionMenuItems.js";
