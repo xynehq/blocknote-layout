@@ -99,6 +99,7 @@ export {
     getMentionSuggestionMenuItems,
     createMentionSuggestionMenuItems,
     insertGroupMention,
+    asBlockNoteEditorForView,
 } from "./mentions/main.js";
 
 export type {
