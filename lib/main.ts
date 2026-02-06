@@ -69,3 +69,25 @@ export type {
     ToolOutputRendererProps,
 } from "./genius/main.js";
 
+// Mentions exports
+export {
+    mentionInlineContentSpec,
+    withMentions,
+    getMentionSuggestionMenuItems,
+    createMentionSuggestionMenuItems,
+    insertGroupMention,
+} from "./mentions/main.js";
+
+// Common utilities exports
+export {
+    asBlockNoteEditorForView,
+} from "./utils/editorUtils.js";
+
+export type {
+    MentionProps,
+    MentionInlineContentSchema,
+    User,
+    Group,
+    OnUserSearch,
+    GetMentionSuggestionMenuItemsOptions,
+} from "./mentions/main.js";
