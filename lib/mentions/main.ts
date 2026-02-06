@@ -13,7 +13,6 @@ export {
     getMentionSuggestionMenuItems,
     createMentionSuggestionMenuItems,
     insertGroupMention,
-    asBlockNoteEditorForView,
 } from "./extensions/getMentionSuggestionMenuItems.js";
 
 export type {

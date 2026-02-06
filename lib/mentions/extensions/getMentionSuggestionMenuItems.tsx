@@ -39,26 +39,6 @@ export interface GetMentionSuggestionMenuItemsOptions {
 }
 
 /**
- * Cast a BlockNote editor (e.g. with custom schema including mention) to the type
- * expected by BlockNoteView and by APIs that use default schema types.
- * Use when you create an editor with BlockNoteSchema.create().extend({ inlineContentSpecs: { mention } })
- * and need to pass it to BlockNoteView or getMentionSuggestionMenuItems.
- */
-export function asBlockNoteEditorForView<
-    B extends BlockSchema,
-    I extends InlineContentSchema,
-    S extends StyleSchema,
->(
-    editor: BlockNoteEditor<B, I, S>
-): BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema> {
-    return editor as unknown as BlockNoteEditor<
-        BlockSchema,
-        InlineContentSchema,
-        StyleSchema
-    >;
-}
-
-/**
  * Check if mention inline content is in the schema
  */
 function checkMentionInSchema<

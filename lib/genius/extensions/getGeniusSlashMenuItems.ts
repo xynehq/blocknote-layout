@@ -8,6 +8,7 @@ import {
 import { DefaultReactSuggestionItem } from "@blocknote/react";
 import { createElement } from "react";
 import { RiSparklingLine } from "react-icons/ri";
+import { asBlockNoteEditorForView } from "../../utils/editorUtils.js";
 
 function insertGenius<
     BSchema extends BlockSchema,
@@ -15,7 +16,7 @@ function insertGenius<
     SSchema extends StyleSchema,
 >(editor: BlockNoteEditor<BSchema, ISchema, SSchema>): void {
     insertOrUpdateBlock(
-        editor as unknown as BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>,
+        asBlockNoteEditorForView(editor),
         { type: "genius" },
     );
 }
