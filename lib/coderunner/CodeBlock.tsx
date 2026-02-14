@@ -1,11 +1,11 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import {
   BlockNoteEditor,
-  insertOrUpdateBlock,
   PropSchema,
   defaultProps,
   BlockConfig,
 } from "@blocknote/core";
+import { insertOrUpdateBlockForSlashMenu } from "@blocknote/core/extensions";
 import { useMemo, useCallback, useState, useRef } from "react";
 import { VscPlay, VscCode } from "react-icons/vsc";
 import ReactCodeMirror, { EditorView } from "@uiw/react-codemirror";
@@ -49,7 +49,7 @@ export const CodeBlock = createReactBlockSpec(
   {
     type: TYPE,
     propSchema: codeRunnerPropSchema,
-    content: "none",
+    content: "none" as const,
   },
   {
     render: ({ block, editor }) => {
@@ -276,7 +276,7 @@ export const insertCode = () => ({
   onItemClick: <BSchema extends Record<string, BlockConfig>>(
     editor: BlockNoteEditor<BSchema>
   ) => {
-    insertOrUpdateBlock(editor, {
+    insertOrUpdateBlockForSlashMenu(editor, {
       type: TYPE,
     });
   },
@@ -292,7 +292,7 @@ export const insertPythonCode = () => ({
     editor: BlockNoteEditor<BSchema>
   ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    insertOrUpdateBlock(editor, {
+    insertOrUpdateBlockForSlashMenu(editor, {
       type: TYPE,
       props: { language: "python" },
     } as any);
@@ -309,7 +309,7 @@ export const insertJavaScriptCode = () => ({
     editor: BlockNoteEditor<BSchema>
   ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    insertOrUpdateBlock(editor, {
+    insertOrUpdateBlockForSlashMenu(editor, {
       type: TYPE,
       props: { language: "javascript" },
     } as any);
