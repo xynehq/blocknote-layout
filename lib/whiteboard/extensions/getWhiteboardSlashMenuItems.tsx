@@ -1,4 +1,5 @@
-import { BlockNoteEditor, BlockSchema, InlineContentSchema, StyleSchema, insertOrUpdateBlock } from "@blocknote/core";
+import { BlockNoteEditor, BlockSchema, InlineContentSchema, StyleSchema } from "@blocknote/core";
+import { insertOrUpdateBlockForSlashMenu } from "@blocknote/core/extensions";
 import { DefaultReactSuggestionItem } from "@blocknote/react";
 import { FaPencilAlt } from "react-icons/fa";
 import { asBlockNoteEditorForView } from "../../utils/editorUtils.js";
@@ -8,8 +9,8 @@ function insertWhiteboard<
     ISchema extends InlineContentSchema,
     SSchema extends StyleSchema
 >(editor: BlockNoteEditor<BSchema, ISchema, SSchema>): void {
-    // Insert a whiteboard block using insertOrUpdateBlock (same pattern as mermaid)
-    insertOrUpdateBlock(
+    // Insert a whiteboard block using insertOrUpdateBlockForSlashMenu
+    insertOrUpdateBlockForSlashMenu(
         asBlockNoteEditorForView(editor),
         { type: "whiteboard" }
     );

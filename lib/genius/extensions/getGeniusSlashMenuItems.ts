@@ -3,8 +3,8 @@ import {
     BlockSchema,
     InlineContentSchema,
     StyleSchema,
-    insertOrUpdateBlock,
 } from "@blocknote/core";
+import { insertOrUpdateBlockForSlashMenu } from "@blocknote/core/extensions";
 import { DefaultReactSuggestionItem } from "@blocknote/react";
 import { createElement } from "react";
 import { RiSparklingLine } from "react-icons/ri";
@@ -15,7 +15,7 @@ function insertGenius<
     ISchema extends InlineContentSchema,
     SSchema extends StyleSchema,
 >(editor: BlockNoteEditor<BSchema, ISchema, SSchema>): void {
-    insertOrUpdateBlock(
+    insertOrUpdateBlockForSlashMenu(
         asBlockNoteEditorForView(editor),
         { type: "genius" },
     );
