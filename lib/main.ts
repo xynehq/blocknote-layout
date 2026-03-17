@@ -101,6 +101,15 @@ export {
     insertGroupMention,
 } from "./mentions/main.js";
 
+// Block reactions exports
+export {
+    BlockReactionButton,
+} from "./block-reactions/main.js";
+
+export type {
+    BlockReactionButtonProps,
+} from "./block-reactions/main.js";
+
 // Common utilities exports
 export {
     asBlockNoteEditorForView,
