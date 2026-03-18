@@ -5,7 +5,7 @@ import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
 import * as Popover from '@radix-ui/react-popover';
 import type { EmojiClickData } from 'emoji-picker-react';
 import { SmilePlus, MessageCircle } from 'lucide-react';
-import './block-reaction-button.css';
+import './canvas-comment-button.css';
 
 // Utility function to combine class names
 const cn = (...classes: (string | undefined | null | false)[]): string => {
@@ -32,7 +32,7 @@ const Button = React.forwardRef<
 });
 Button.displayName = 'Button';
 
-export interface BlockReactionButtonProps {
+export interface CanvasCommentButtonProps {
   editor: BlockNoteEditor<any, any, any>;
   blockReactions: Record<string, Record<string, string[]>>; // blockId -> emoji -> userIds[]
   commentCounts: Record<string, number>; // blockId -> count
@@ -47,7 +47,7 @@ export interface BlockReactionButtonProps {
   TooltipComponent?: React.ComponentType<{ content: string; side?: 'top'; delayDuration?: number; children: React.ReactNode }>;
 }
 
-export const BlockReactionButton: React.FC<BlockReactionButtonProps> = ({
+export const CanvasCommentButton: React.FC<CanvasCommentButtonProps> = ({
   editor: _editor,
   blockReactions,
   commentCounts,

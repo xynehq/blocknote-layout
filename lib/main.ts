@@ -101,14 +101,14 @@ export {
     insertGroupMention,
 } from "./mentions/main.js";
 
-// Block reactions exports
+// Canvas comments exports
 export {
-    BlockReactionButton,
-} from "./block-reactions/main.js";
+    CanvasCommentButton,
+} from "./canvas-comments/main.js";
 
 export type {
-    BlockReactionButtonProps,
-} from "./block-reactions/main.js";
+    CanvasCommentButtonProps,
+} from "./canvas-comments/main.js";
 
 // Common utilities exports
 export {

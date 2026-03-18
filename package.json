@@ -43,9 +43,9 @@
       "types": "./dist/main.d.ts",
       "import": "./dist/main.js"
     },
-    "./block-reactions": {
-      "types": "./dist/block-reactions/main.d.ts",
-      "import": "./dist/block-reactions/main.js"
+    "./canvas-comments": {
+      "types": "./dist/canvas-comments/main.d.ts",
+      "import": "./dist/canvas-comments/main.js"
     },
     "./multicolumn": {
       "types": "./dist/multicolumn/main.d.ts",
