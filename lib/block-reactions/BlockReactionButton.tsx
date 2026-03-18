@@ -43,6 +43,8 @@ export interface BlockReactionButtonProps {
   onThreadClick?: (blockId: string, threadId: string) => void;
   isCommentPanelOpen?: boolean;
   user?: any; // Optional user object with id property
+  users?: Array<{ id: string; name: string }> | undefined; // Users list for tooltip display
+  TooltipComponent?: React.ComponentType<{ content: string; side?: 'top'; delayDuration?: number; children: React.ReactNode }>;
 }
 
 export const BlockReactionButton: React.FC<BlockReactionButtonProps> = ({
@@ -56,6 +58,8 @@ export const BlockReactionButton: React.FC<BlockReactionButtonProps> = ({
   onThreadClick,
   isCommentPanelOpen,
   user,
+  users,
+  TooltipComponent,
 }) => {
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
   const [isHoveringButton, setIsHoveringButton] = useState(false);
@@ -177,16 +181,12 @@ export const BlockReactionButton: React.FC<BlockReactionButtonProps> = ({
             reactions={blockReactionData}
             commentCount={commentCount}
             user={user}
-            onToggleReaction={(emoji) => handleToggleReaction(blockId, emoji)}
             onCommentClick={() => onCommentClick(blockId)}
             threads={blockThreads?.[blockId] || []}
             onThreadClick={onThreadClick}
-            emojiPickerOpen={emojiPickerOpen === blockId}
-            onEmojiPickerOpenChange={(open) => {
-              setEmojiPickerOpen(open ? blockId : null);
-              if (open) clearHideTimeout();
-            }}
             isCommentPanelOpen={isCommentPanelOpen}
+            users={users}
+            TooltipComponent={TooltipComponent}
           />
         );
       })}
@@ -213,12 +213,68 @@ export const BlockReactionButton: React.FC<BlockReactionButtonProps> = ({
             if (open) clearHideTimeout();
           }}
           isCommentPanelOpen={isCommentPanelOpen}
+          TooltipComponent={TooltipComponent}
           ref={buttonRef}
         />
       )}
     </>
   );
 };
+
+// Simple reaction display showing all emojis used and total count
+interface ReactionButtonsProps {
+  reactionEmojis: string[];
+  reactions: Record<string, string[]>;
+  usersById: Map<string, { name: string }>;
+  TooltipComponent?: React.ComponentType<{ content: string; side?: 'top'; delayDuration?: number; children: React.ReactNode }>;
+}
+
+const ReactionButtons: React.FC<ReactionButtonsProps> = React.memo(({
+  reactionEmojis,
+  reactions,
+  usersById,
+  TooltipComponent,
+}) => {
+  // Calculate total reaction count
+  let totalCount = 0;
+  const allUserIds = new Set<string>();
+
+  reactionEmojis.forEach(emoji => {
+    const userIds = reactions[emoji] || [];
+    totalCount += userIds.length;
+    userIds.forEach(id => allUserIds.add(id));
+  });
+
+  // Build tooltip with all user names
+  const userNames = Array.from(allUserIds).map(id => usersById.get(id)?.name || 'Unknown').join(', ');
+  const verb = allUserIds.size === 1 ? 'has' : 'have';
+  const tooltipTitle = `${userNames} ${verb} reacted`;
+
+  const display = (
+    <div
+      className='bn-activity-btn bn-reaction-btn-with-count'
+      style={{ cursor: 'default' }}
+    >
+      {reactionEmojis.map(emoji => (
+        <span key={emoji} className='emoji' style={{ marginRight: '2px' }}>{emoji}</span>
+      ))}
+      {totalCount > 0 && <span className='count'>{totalCount}</span>}
+    </div>
+  );
+
+  // Use custom Tooltip component if provided, otherwise use native title
+  if (TooltipComponent) {
+    return (
+      <TooltipComponent content={tooltipTitle} side="top" delayDuration={100}>
+        {display}
+      </TooltipComponent>
+    );
+  }
+
+  return React.cloneElement(display, { title: tooltipTitle });
+});
+
+ReactionButtons.displayName = 'ReactionButtons';
 
 // Persistent button showing reactions and comments with counts
 interface PersistentActivityButtonProps {
@@ -228,12 +284,11 @@ interface PersistentActivityButtonProps {
   commentCount: number;
   threads?: Array<{ threadId: string; threadData: any; commentCount: number }>;
   user: any;
-  onToggleReaction: (emoji: string) => void;
   onCommentClick: () => void;
   onThreadClick?: ((blockId: string, threadId: string) => void) | undefined;
-  emojiPickerOpen: boolean;
-  onEmojiPickerOpenChange: (open: boolean) => void;
   isCommentPanelOpen?: boolean | undefined;
+  users?: Array<{ id: string; name: string }> | undefined;
+  TooltipComponent?: React.ComponentType<{ content: string; side?: 'top'; delayDuration?: number; children: React.ReactNode }>;
 }
 
 const PersistentActivityButton: React.FC<PersistentActivityButtonProps> = ({
@@ -242,16 +297,24 @@ const PersistentActivityButton: React.FC<PersistentActivityButtonProps> = ({
   reactions,
   commentCount,
   threads = [],
-  user,
-  onToggleReaction,
+  user: _user,
   onCommentClick,
   onThreadClick,
-  emojiPickerOpen,
-  onEmojiPickerOpenChange,
   isCommentPanelOpen,
+  users,
+  TooltipComponent,
 }) => {
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const [threadsPopoverOpen, setThreadsPopoverOpen] = useState(false);
+
+  const usersById = useMemo(() => {
+    const map = new Map<string, { name: string }>();
+    for (const u of users || []) {
+      map.set(u.id, { name: u.name });
+    }
+    return map;
+  }, [users]);
+
 
   useEffect(() => {
     const updatePosition = () => {
@@ -261,19 +324,26 @@ const PersistentActivityButton: React.FC<PersistentActivityButtonProps> = ({
         const buttonHeight = 36;
         const padding = 12;
 
+        // Check if block is visible in viewport
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+
+        if (!isVisible) {
+          // Hide button when block is out of view
+          setPosition(null);
+          return;
+        }
+
         // Always position to the right of the block
         let left = rect.right + padding;
 
         // Center vertically relative to block
         let top = rect.top + rect.height / 2 - buttonHeight / 2;
 
-        // Check bottom bounds
-        if (top + buttonHeight > window.innerHeight) {
-          top = window.innerHeight - buttonHeight - padding;
-        }
-        // Check top bounds
-        if (top < 0) {
-          top = padding;
+        const margin = 100; // Hide when within 100px of viewport edge
+
+        if (rect.top < margin || rect.bottom > window.innerHeight - margin) {
+          setPosition(null);
+          return;
         }
 
         setPosition({ top, left });
@@ -292,23 +362,32 @@ const PersistentActivityButton: React.FC<PersistentActivityButtonProps> = ({
       });
     }
 
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
+    // Use requestAnimationFrame for smooth updates during scroll
+    let rafId: number | null = null;
+    let lastUpdate = 0;
+    const throttledUpdate = () => {
+      const now = Date.now();
+      if (now - lastUpdate < 16) return; // Max ~60fps
+      lastUpdate = now;
 
-    // Only update position periodically if emoji picker is not open
-    const interval = setInterval(() => {
-      if (!emojiPickerOpen) {
-        updatePosition();
-      }
-    }, 100);
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updatePosition);
+    };
+
+    window.addEventListener('scroll', throttledUpdate, { capture: true, passive: true });
+    window.addEventListener('resize', updatePosition, { passive: true });
+
+    // Also update periodically as a fallback
+    const interval = setInterval(updatePosition, 50);
 
     return () => {
       transitionTimeouts.forEach(clearTimeout);
       window.removeEventListener('scroll', updatePosition, true);
       window.removeEventListener('resize', updatePosition);
+      if (rafId) cancelAnimationFrame(rafId);
       clearInterval(interval);
     };
-  }, [blockId, isCommentPanelOpen, emojiPickerOpen]);
+  }, [blockId, isCommentPanelOpen]);
 
   if (!position) return null;
 
@@ -325,43 +404,43 @@ const PersistentActivityButton: React.FC<PersistentActivityButtonProps> = ({
         zIndex: 999,
       }}
     >
-      {/* Reactions */}
-      {hasReactions &&
-        reactionEmojis.map(emoji => {
-          const userIds = reactions[emoji] || [];
-          const hasUserReacted = user?.id ? userIds.includes(user.id) : false;
-
-          return (
-            <button
-              key={emoji}
-              className={cn(
-                'bn-activity-btn bn-reaction-btn-with-count',
-                hasUserReacted && 'bn-activity-btn--active',
-              )}
-              onClick={() => onToggleReaction(emoji)}
-              title={`${userIds.length} reaction${userIds.length > 1 ? 's' : ''}`}
-              type='button'
-            >
-              <span className='emoji'>{emoji}</span>
-              {userIds.length > 0 && <span className='count'>{userIds.length}</span>}
-            </button>
-          );
-        })}
+      {/* Reactions - display only, click on markText to interact */}
+      {hasReactions && (
+        <ReactionButtons
+          reactionEmojis={reactionEmojis}
+          reactions={reactions}
+          usersById={usersById}
+          TooltipComponent={TooltipComponent}
+        />
+      )}
 
       {/* Comments - only show if no reactions (mutually exclusive) */}
       {hasComments && !hasReactions && threads && threads.length > 1 ? (
         // Multiple threads: show popover with list
         <Popover.Root open={threadsPopoverOpen} onOpenChange={setThreadsPopoverOpen}>
           <Popover.Trigger asChild>
-            <button
-              className='bn-activity-btn bn-comment-btn-with-count'
-              onClick={(e) => e.stopPropagation()}
-              title={`${commentCount} comment${commentCount > 1 ? 's' : ''}`}
-              type='button'
-            >
-              <MessageCircle className='w-4 h-4' />
-              {commentCount > 0 && <span className='count'>{commentCount}</span>}
-            </button>
+            {TooltipComponent ? (
+              <TooltipComponent content={`${commentCount} comment${commentCount > 1 ? 's' : ''}`} side='top' delayDuration={100}>
+                <button
+                  className='bn-activity-btn bn-comment-btn-with-count'
+                  onClick={(e) => e.stopPropagation()}
+                  type='button'
+                >
+                  <MessageCircle className='w-4 h-4' />
+                  {commentCount > 0 && <span className='count'>{commentCount}</span>}
+                </button>
+              </TooltipComponent>
+            ) : (
+              <button
+                className='bn-activity-btn bn-comment-btn-with-count'
+                onClick={(e) => e.stopPropagation()}
+                title={`${commentCount} comment${commentCount > 1 ? 's' : ''}`}
+                type='button'
+              >
+                <MessageCircle className='w-4 h-4' />
+                {commentCount > 0 && <span className='count'>{commentCount}</span>}
+              </button>
+            )}
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Content
@@ -393,52 +472,30 @@ const PersistentActivityButton: React.FC<PersistentActivityButtonProps> = ({
         </Popover.Root>
       ) : hasComments && !hasReactions ? (
         // Single thread: open directly
-        <button
-          className='bn-activity-btn bn-comment-btn-with-count'
-          onClick={onCommentClick}
-          title={`${commentCount} comment${commentCount > 1 ? 's' : ''}`}
-          type='button'
-        >
-          <MessageCircle className='w-4 h-4' />
-          {commentCount > 0 && <span className='count'>{commentCount}</span>}
-        </button>
+        TooltipComponent ? (
+          <TooltipComponent content={`${commentCount} comment${commentCount > 1 ? 's' : ''}`} side='top' delayDuration={100}>
+            <button
+              className='bn-activity-btn bn-comment-btn-with-count'
+              onClick={onCommentClick}
+              type='button'
+            >
+              <MessageCircle className='w-4 h-4' />
+              {commentCount > 0 && <span className='count'>{commentCount}</span>}
+            </button>
+          </TooltipComponent>
+        ) : (
+          <button
+            className='bn-activity-btn bn-comment-btn-with-count'
+            onClick={onCommentClick}
+            title={`${commentCount} comment${commentCount > 1 ? 's' : ''}`}
+            type='button'
+          >
+            <MessageCircle className='w-4 h-4' />
+            {commentCount > 0 && <span className='count'>{commentCount}</span>}
+          </button>
+        )
       ) : null}
 
-      {/* Add reaction button - only show if no comments (mutually exclusive) */}
-      {!hasComments && (
-        <Popover.Root open={emojiPickerOpen} onOpenChange={onEmojiPickerOpenChange}>
-          <Popover.Trigger asChild>
-            <Button
-              variant='ghost'
-              className='size-8 text-muted-foreground p-0'
-              title='Add reaction'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <SmilePlus className='w-4 h-4' />
-            </Button>
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content
-              className='z-[1000] bg-popover rounded-lg shadow-md p-0'
-              align='start'
-              side='bottom'
-              sideOffset={8}
-            >
-              <EmojiPicker
-                style={{ width: '320px' }}
-                emojiStyle={EmojiStyle.NATIVE}
-                onEmojiClick={(emoji: EmojiClickData) => {
-                  const emojiName = emoji.isCustom
-                    ? `custom:${emoji.emoji}:${emoji.names[0] || 'custom'}`
-                    : emoji.emoji;
-                  onToggleReaction(emojiName);
-                }}
-                searchPlaceholder='Search emoji...'
-              />
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
-      )}
     </div>,
     document.body,
   );
@@ -454,6 +511,7 @@ interface HoverActivityButtonProps {
   emojiPickerOpen: boolean;
   onEmojiPickerOpenChange: (open: boolean) => void;
   isCommentPanelOpen?: boolean | undefined;
+  TooltipComponent?: React.ComponentType<{ content: string; side?: 'top'; delayDuration?: number; children: React.ReactNode }>;
 }
 
 const HoverActivityButton = React.forwardRef<HTMLDivElement, HoverActivityButtonProps>(
@@ -467,6 +525,7 @@ const HoverActivityButton = React.forwardRef<HTMLDivElement, HoverActivityButton
       emojiPickerOpen,
       onEmojiPickerOpenChange,
       isCommentPanelOpen,
+      TooltipComponent,
     },
     ref,
   ) => {
@@ -537,16 +596,28 @@ const HoverActivityButton = React.forwardRef<HTMLDivElement, HoverActivityButton
       >
         {/* Reaction button with emoji picker */}
         <Popover.Root open={emojiPickerOpen} onOpenChange={onEmojiPickerOpenChange}>
-          <Popover.Trigger asChild>
-            <Button
-              variant='ghost'
-              className='size-8 text-muted-foreground p-0'
-              title='Add reaction'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <SmilePlus className='w-4 h-4' />
-            </Button>
-          </Popover.Trigger>
+          {TooltipComponent ? (
+            <TooltipComponent content='Add reaction' side='top'>
+              <Popover.Trigger asChild>
+                <button
+                  className='bn-activity-btn'
+                  type='button'
+                >
+                  <SmilePlus className='w-4 h-4' />
+                </button>
+              </Popover.Trigger>
+            </TooltipComponent>
+          ) : (
+            <Popover.Trigger asChild>
+              <button
+                className='bn-activity-btn'
+                title='Add reaction'
+                type='button'
+              >
+                <SmilePlus className='w-4 h-4' />
+              </button>
+            </Popover.Trigger>
+          )}
           <Popover.Portal>
             <Popover.Content
               className='z-[1000] bg-popover rounded-lg shadow-md p-0'
@@ -570,14 +641,26 @@ const HoverActivityButton = React.forwardRef<HTMLDivElement, HoverActivityButton
         </Popover.Root>
 
         {/* Comment button */}
-        <Button
-          variant='ghost'
-          className='size-8 text-muted-foreground p-0'
-          title='Add comment'
-          onClick={onCommentClick}
-        >
-          <MessageCircle className='w-4 h-4' />
-        </Button>
+        {TooltipComponent ? (
+          <TooltipComponent content='Add comment' side='top'>
+            <Button
+              variant='ghost'
+              className='size-8 text-muted-foreground p-0'
+              onClick={onCommentClick}
+            >
+              <MessageCircle className='w-4 h-4' />
+            </Button>
+          </TooltipComponent>
+        ) : (
+          <Button
+            variant='ghost'
+            className='size-8 text-muted-foreground p-0'
+            title='Add comment'
+            onClick={onCommentClick}
+          >
+            <MessageCircle className='w-4 h-4' />
+          </Button>
+        )}
       </div>,
       document.body,
     );
