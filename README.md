@@ -1,17 +1,32 @@
-# BlockNote Layout
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/BlockNote_Layout-Extensions_for_BlockNote_Editor-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSI5IiBoZWlnaHQ9IjkiIHJ4PSIxIi8+PHJlY3QgeD0iMTMiIHk9IjIiIHdpZHRoPSI5IiBoZWlnaHQ9IjkiIHJ4PSIxIi8+PHJlY3QgeD0iMiIgeT0iMTMiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iMSIvPjwvc3ZnPg==&labelColor=1a1a2e&color=4361ee" />
+    <img alt="BlockNote Layout" src="https://img.shields.io/badge/BlockNote_Layout-Extensions_for_BlockNote_Editor-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSI5IiBoZWlnaHQ9IjkiIHJ4PSIxIi8+PHJlY3QgeD0iMTMiIHk9IjIiIHdpZHRoPSI5IiBoZWlnaHQ9IjkiIHJ4PSIxIi8+PHJlY3QgeD0iMiIgeT0iMTMiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iMSIvPjwvc3ZnPg==&labelColor=1a1a2e&color=4361ee" />
+  </picture>
+</p>
 
-Layout and utility extensions for [BlockNote](https://www.blocknotejs.org/) - the open-source block-based rich text editor.
+<p align="center">
+  <strong>Layout and utility extensions for <a href="https://www.blocknotejs.org/">BlockNote</a> — the open-source block-based rich text editor.</strong>
+</p>
 
-[![npm version](https://img.shields.io/npm/v/blocknote-layout)](https://www.npmjs.com/package/blocknote-layout)
-[![CI](https://github.com/gyash1512/blocknote-layout/actions/workflows/ci.yml/badge.svg)](https://github.com/gyash1512/blocknote-layout/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://www.npmjs.com/package/blocknote-layout"><img src="https://img.shields.io/npm/v/blocknote-layout" alt="npm version" /></a>
+  <a href="https://github.com/gyash1512/blocknote-layout/actions/workflows/ci.yml"><img src="https://github.com/gyash1512/blocknote-layout/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://www.npmjs.com/package/blocknote-layout"><img src="https://img.shields.io/npm/l/blocknote-layout" alt="license" /></a>
+</p>
 
 ---
 
 ## Features
 
-- **Multi-Column Layouts** - Notion-style columns with resizable dividers and responsive stacking
-- **Python Code Runner** - Execute Python code in-browser using Pyodide with package support
-- **Slideshow Presentations** - Create and present slides with Reveal.js integration
+| Module | Description |
+|--------|-------------|
+| **Multi-Column Layout** | Notion-style columns with resizable dividers, drag-and-drop, and responsive stacking |
+| **Code Runner** | Execute code in-browser with multi-language support (Python via Pyodide, others via Judge0) and syntax highlighting |
+| **Slideshow** | Create and present slides with Reveal.js integration and theme support |
+| **Spreadsheet** | Embedded spreadsheets powered by Handsontable with formula support (HyperFormula) and charting (ECharts) |
+| **Whiteboard** | Freeform drawing and diagramming canvas powered by Excalidraw |
+| **Mentions** | @mention support for users and groups with autocomplete suggestions |
 
 ---
 
@@ -23,210 +38,135 @@ npm install blocknote-layout
 
 ---
 
-## Multi-Column Layout
+## Modules
 
-Create Notion-style multi-column layouts with drag-and-drop support.
+### Multi-Column Layout
 
-```tsx
-import { BlockNoteSchema } from "@blocknote/core";
-import { BlockNoteView } from "@blocknote/mantine";
-import { useCreateBlockNote } from "@blocknote/react";
+Create Notion-style multi-column layouts with drag-and-drop and resizable columns.
+
+```ts
 import { withMultiColumn, getMultiColumnSlashMenuItems } from "blocknote-layout";
 // or: import { withMultiColumn } from "blocknote-layout/multicolumn";
-
-// Create schema with multi-column support
-const schema = withMultiColumn(BlockNoteSchema.create());
-
-function App() {
-  const editor = useCreateBlockNote({ schema });
-
-  return <BlockNoteView editor={editor} />;
-}
 ```
 
-### Multi-Column Exports
-
-```ts
-import {
-  // Schema utilities
-  withMultiColumn,
-  createMultiColumnSchema,
-  multiColumnSchema,
-  multiColumnBlockSpecs,
-  
-  // Block components
-  ColumnBlock,
-  ColumnListBlock,
-  MultiColumnBlock,
-  
-  // ProseMirror nodes
-  Column,
-  ColumnList,
-  ColumnExtensions,
-  
-  // Extensions
-  getMultiColumnSlashMenuItems,
-  createColumnResizeExtension,
-  multiColumnDropCursor,
-} from "blocknote-layout";
-```
+**Key exports:** `withMultiColumn`, `createMultiColumnSchema`, `ColumnBlock`, `ColumnListBlock`, `getMultiColumnSlashMenuItems`, `createColumnResizeExtension`, `multiColumnDropCursor`
 
 ---
 
-## Python Code Runner
+### Code Runner
 
-Execute Python code directly in the browser using Pyodide.
-
-```tsx
-import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
-import { BlockNoteView } from "@blocknote/mantine";
-import { useCreateBlockNote, SuggestionMenuController, getDefaultReactSlashMenuItems, filterSuggestionItems } from "@blocknote/react";
-import { CodeBlock, insertCode } from "blocknote-layout";
-// or: import { CodeBlock, insertCode } from "blocknote-layout/coderunner";
-
-const schema = BlockNoteSchema.create({
-  blockSpecs: {
-    ...defaultBlockSpecs,
-    codeRunner: CodeBlock,
-  },
-});
-
-function App() {
-  const editor = useCreateBlockNote({ schema });
-
-  return (
-    <BlockNoteView editor={editor} slashMenu={false}>
-      <SuggestionMenuController
-        triggerCharacter="/"
-        getItems={async (query) =>
-          filterSuggestionItems(
-            [...getDefaultReactSlashMenuItems(editor), insertCode()],
-            query
-          )
-        }
-      />
-    </BlockNoteView>
-  );
-}
-```
-
-### Code Runner Features
-
-- **In-Browser Runtime**: Full CPython 3.12 environment via WebAssembly
-- **Package Support**: Auto-detects and installs imports (pandas, numpy, scipy, matplotlib)
-- **Output Capture**: Terminal-style output for stdout and stderr
-- **Matplotlib Support**: Renders plots as images in the output
-
-### Code Runner Exports
+Execute code directly in the browser. Supports Python (via Pyodide/WebAssembly), JavaScript, Java, Go, C++, Rust, PHP, and more (via Judge0).
 
 ```ts
-import {
-  CodeBlock,
-  insertCode,
-  runPython,
-  getPyodide,
-  isPyodideLoaded,
-  isPyodideLoading,
-} from "blocknote-layout";
-
-import type { CodeBlockProps, PythonResult } from "blocknote-layout";
+import { CodeBlock, insertCode, setCodeRunnerConfig } from "blocknote-layout";
+// or: import { CodeBlock } from "blocknote-layout/coderunner";
 ```
+
+**Key exports:** `CodeBlock`, `insertCode`, `insertPythonCode`, `insertJavaScriptCode`, `executeCode`, `setCodeRunnerConfig`, `getCodeRunnerConfig`, `LANGUAGES`, `getSupportedLanguages`
+
+**Highlights:**
+- Syntax highlighting via CodeMirror
+- Auto-detects and installs Python packages (pandas, numpy, scipy, matplotlib)
+- Matplotlib plots rendered as images in the output
+- Configurable execution backend
 
 ---
 
-## Slideshow Presentations
+### Slideshow
 
-Create presentation slides with Reveal.js integration directly in BlockNote.
-
-```tsx
-import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
-import { BlockNoteView } from "@blocknote/mantine";
-import { useCreateBlockNote } from "@blocknote/react";
-import { withSlideshow, getSlideshowSlashMenuItems } from "blocknote-layout";
-// or: import { withSlideshow } from "blocknote-layout/slideshow";
-
-// Create schema with slideshow support
-const schema = withSlideshow(BlockNoteSchema.create());
-
-function App() {
-  const editor = useCreateBlockNote({ schema });
-
-  return <BlockNoteView editor={editor} />;
-}
-```
-
-### Slideshow Features
-
-- **Reveal.js Integration**: Full-featured presentation mode with transitions
-- **Slide Management**: Create, organize, and present slides within your editor
-- **Auto-conversion**: Convert regular blocks into presentation slides
-- **Presentation Modal**: Immersive fullscreen presentation experience
-
-### Slideshow Exports
+Convert document content into presentation slides with Reveal.js.
 
 ```ts
-import {
-  // Schema utilities
-  withSlideshow,
-  createSlideshowSchema,
-  slideshowSchema,
-  slideshowBlockSpecs,
-  checkSlideshowBlocksInSchema,
-  
-  // Block components
-  SlideBlock,
-  SlideshowBlock,
-  
-  // ProseMirror nodes
-  Slide,
-  Slideshow,
-  
-  // Extensions and utilities
-  getSlideshowSlashMenuItems,
-  insertSlideshow,
-  
-  // React components
-  SlideshowNode,
-  SlideNodeView,
-  PresentationModal,
-} from "blocknote-layout";
+import { usePresentation, PresentToolbar, PRESENTATION_THEMES } from "blocknote-layout";
+// or: import { usePresentation } from "blocknote-layout/slideshow";
 ```
+
+**Key exports:** `usePresentation`, `PresentationModal`, `PresentToolbar`, `generateSlidesFromBlocks`, `PRESENTATION_THEMES`
+
+**Highlights:**
+- Themes: white, black, beige, sky
+- Fullscreen presentation modal
+- Automatic block-to-slide conversion
+
+---
+
+### Spreadsheet
+
+Embedded spreadsheets with formula support and charting.
+
+```ts
+import { withSpreadsheet, getSpreadsheetSlashMenuItems } from "blocknote-layout";
+// or: import { withSpreadsheet } from "blocknote-layout/spreadsheet";
+```
+
+**Key exports:** `withSpreadsheet`, `createSpreadsheetSchema`, `SpreadsheetBlock`, `getSpreadsheetSlashMenuItems`, `insertSpreadsheet`, `SpreadsheetNodeView`
+
+**Highlights:**
+- Full spreadsheet editing via Handsontable
+- Formula engine powered by HyperFormula
+- Charting with ECharts
+
+---
+
+### Whiteboard
+
+Freeform drawing and diagramming canvas.
+
+```ts
+import { withWhiteboard, getWhiteboardSlashMenuItems } from "blocknote-layout";
+// or: import { withWhiteboard } from "blocknote-layout/whiteboard";
+```
+
+**Key exports:** `withWhiteboard`, `createWhiteboardSchema`, `WhiteboardBlock`, `getWhiteboardSlashMenuItems`, `insertWhiteboard`, `WhiteboardNodeView`
+
+**Highlights:**
+- Powered by Excalidraw
+- Sketching, shapes, arrows, text, and more
+- Embeds directly in the document
+
+---
+
+### Mentions
+
+@mention support for users and groups with autocomplete.
+
+```ts
+import { withMentions, getMentionSuggestionMenuItems } from "blocknote-layout";
+```
+
+**Key exports:** `withMentions`, `getMentionSuggestionMenuItems`, `createMentionSuggestionMenuItems`, `insertGroupMention`, `mentionInlineContentSpec`
 
 ---
 
 ## Subpath Imports
 
-You can also import from specific subpaths for tree-shaking:
+Each module can be imported individually for tree-shaking:
 
 ```ts
-// Import only multi-column
 import { withMultiColumn } from "blocknote-layout/multicolumn";
-
-// Import only code runner
 import { CodeBlock } from "blocknote-layout/coderunner";
-
-// Import only slideshow
-import { withSlideshow } from "blocknote-layout/slideshow";
+import { usePresentation } from "blocknote-layout/slideshow";
+import { withSpreadsheet } from "blocknote-layout/spreadsheet";
+import { withWhiteboard } from "blocknote-layout/whiteboard";
 ```
 
 ---
 
 ## Peer Dependencies
 
-```json
-{
-  "@blocknote/core": "^0.42.3",
-  "@blocknote/mantine": "^0.42.3",
-  "@blocknote/react": "^0.42.3",
-  "@tiptap/core": "^3.0.0",
-  "@uiw/react-codemirror": "^4.21.0",
-  "react": "^18.0.0 || ^19.0.0",
-  "react-dom": "^18.0.0 || ^19.0.0",
-  "react-icons": "^4.0.0 || ^5.0.0"
-}
-```
+| Package | Version |
+|---------|---------|
+| `@blocknote/core` | `0.47.1` |
+| `@blocknote/mantine` | `0.47.1` |
+| `@blocknote/react` | `0.47.1` |
+| `@tiptap/core` | `^3.0.0` |
+| `@uiw/react-codemirror` | `^4.21.0` |
+| `react` | `^18.0.0 \|\| ^19.0.0` |
+| `react-dom` | `^18.0.0 \|\| ^19.0.0` |
+| `react-icons` | `^4.0.0 \|\| ^5.0.0` |
 
 ---
 
-See the [LICENSE](./LICENSE) file for details.
+## License
 
+See the [LICENSE](./LICENSE) file for details.
