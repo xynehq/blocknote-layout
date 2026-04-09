@@ -67,6 +67,7 @@ export type {
     GeniusNodeViewConfig,
     GeniusSubmitResult,
     ToolOutputRendererProps,
+    BotInfo,
 } from "./genius/main.js";
 
 // Mentions exports

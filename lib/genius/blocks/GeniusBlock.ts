@@ -25,5 +25,11 @@ export const GeniusBlock = createBlockSpecFromTiptapNode(
         isLoading: {
             default: false,
         },
+        botId: {
+            default: "",
+        },
+        botName: {
+            default: "",
+        },
     },
 );
