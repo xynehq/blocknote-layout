@@ -30,13 +30,25 @@ export interface GeniusSubmitResult {
 }
 
 /**
+ * Bot info for the bot selector
+ */
+export interface BotInfo {
+    id: string;
+    name: string;
+    description?: string;
+    picture?: string | null;
+}
+
+/**
  * Configuration for the GeniusNodeView component
  */
 export interface GeniusNodeViewConfig {
     /**
      * Callback to handle query submission. Should return AI response.
+     * @param query - The user's input query
+     * @param botId - Optional bot ID to route the query to a specific bot
      */
-    onSubmit: (query: string) => Promise<GeniusSubmitResult>;
+    onSubmit: (query: string, botId?: string) => Promise<GeniusSubmitResult>;
 
     /**
      * Component to render tool outputs (charts, tables, etc.)
@@ -67,6 +79,13 @@ export interface GeniusNodeViewConfig {
      * Title text shown in header
      */
     title?: string;
+
+    /**
+     * Optional callback to fetch available bots.
+     * When provided, shows a bot selector dropdown in input mode.
+     * When absent, no selector is shown (backward compatible behavior).
+     */
+    getBots?: () => Promise<BotInfo[]>;
 }
 
 // Store configuration
@@ -145,8 +164,12 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
     const titleAttr = (node.attrs["title"] as string) || "Genius Output";
     const queryAttr = (node.attrs["query"] as string) || "";
     const isLoadingAttr = (node.attrs["isLoading"] as boolean) || false;
+    const botIdAttr = (node.attrs["botId"] as string) || "";
+    const botNameAttr = (node.attrs["botName"] as string) || "";
 
     const [error, setError] = useState<string | null>(null);
+    const [bots, setBots] = useState<BotInfo[]>([]);
+    const [botsLoaded, setBotsLoaded] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Auto-focus on mount if no data
@@ -159,6 +182,27 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
         }
     }, []);
 
+    // Fetch bots if getBots is provided
+    useEffect(() => {
+        if (config?.getBots && !botsLoaded) {
+            config.getBots().then((result) => {
+                setBots(result);
+                setBotsLoaded(true);
+            }).catch(() => {
+                setBotsLoaded(true);
+            });
+        }
+    }, [config?.getBots, botsLoaded]);
+
+    const handleBotChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>): void => {
+        const selectedId = e.target.value;
+        const selectedBot = bots.find(b => b.id === selectedId);
+        updateAttributes({
+            botId: selectedId,
+            botName: selectedBot?.name || "",
+        });
+    }, [bots, updateAttributes]);
+
     // Memoize tool outputs parsing
     const toolOutputs = useMemo(() => parseToolOutputs(dataAttr), [dataAttr]);
 
@@ -169,7 +213,7 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
         setError(null);
 
         try {
-            const result = await config.onSubmit(queryAttr.trim());
+            const result = await config.onSubmit(queryAttr.trim(), botIdAttr || undefined);
 
             if (result.toolOutputs && result.toolOutputs.length > 0) {
                 updateAttributes({
@@ -195,7 +239,7 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
             setError(err instanceof Error ? err.message : "Failed to get response");
             updateAttributes({ isLoading: false });
         }
-    }, [queryAttr, isLoadingAttr, updateAttributes, config]);
+    }, [queryAttr, isLoadingAttr, updateAttributes, config, botIdAttr]);
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
@@ -213,6 +257,7 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
     const MarkdownRendererComponent = config?.MarkdownRenderer;
     const placeholder = config?.placeholder || "Ask a question to generate charts, tables, or insights...";
     const headerTitle = config?.title || "Ask Genius";
+    const showBotSelector = config?.getBots && bots.length > 0;
 
     // Input mode - no data yet
     if (!hasData) {
@@ -222,6 +267,21 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
                     <div className="genius-block-header">
                         <RiSparklingLine size={18} className="genius-block-icon-svg" />
                         <span className="genius-block-title">{headerTitle}</span>
+                        {showBotSelector && (
+                            <select
+                                className="genius-block-bot-select"
+                                value={botIdAttr}
+                                onChange={handleBotChange}
+                                onMouseDown={(e): void => e.stopPropagation()}
+                            >
+                                <option value="">Select Bot</option>
+                                {bots.map((bot) => (
+                                    <option key={bot.id} value={bot.id}>
+                                        {bot.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                     <div
                         className="genius-block-input-area"
@@ -269,6 +329,11 @@ export const GeniusNodeViewBase = (props: GeniusNodeViewBaseProps): JSX.Element 
                 <div className="genius-block-header">
                     <RiSparklingLine size={18} className="genius-block-icon-svg" />
                     <span className="genius-block-title">{titleAttr}</span>
+                    {botNameAttr && (
+                        <span style={{ fontSize: "12px", color: "#6b7280", fontWeight: 400 }}>
+                            via {botNameAttr}
+                        </span>
+                    )}
                 </div>
                 <div
                     className="genius-block-content"

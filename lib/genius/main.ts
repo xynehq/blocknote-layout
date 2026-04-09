@@ -20,7 +20,8 @@ export type {
     GeniusNodeViewBaseProps,
     GeniusNodeViewConfig,
     GeniusSubmitResult,
-    ToolOutputRendererProps
+    ToolOutputRendererProps,
+    BotInfo,
 } from "./components/GeniusNodeViewBase.js";
 
 // Import CSS for side-effect (will be bundled)

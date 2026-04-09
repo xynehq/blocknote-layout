@@ -11,6 +11,8 @@ export interface GeniusNodeViewProps {
             content: string;
             query: string;
             isLoading: boolean;
+            botId: string;
+            botName: string;
         };
     };
     updateAttributes: (attrs: Partial<{
@@ -19,6 +21,8 @@ export interface GeniusNodeViewProps {
         content: string;
         query: string;
         isLoading: boolean;
+        botId: string;
+        botName: string;
     }>) => void;
 }
 
@@ -60,6 +64,8 @@ export const Genius = Node.create({
         const DATA_GENIUS_CONTENT = "data-genius-content";
         const DATA_QUERY = "data-query";
         const DATA_IS_LOADING = "data-is-loading";
+        const DATA_BOT_ID = "data-bot-id";
+        const DATA_BOT_NAME = "data-bot-name";
 
         return {
             title: {
@@ -100,6 +106,22 @@ export const Genius = Node.create({
                     element.getAttribute(DATA_IS_LOADING) === "true",
                 renderHTML: (attributes: Record<string, unknown>): Record<string, string> => ({
                     [DATA_IS_LOADING]: String(attributes["isLoading"]),
+                }),
+            },
+            botId: {
+                default: "",
+                parseHTML: (element: HTMLElement): string =>
+                    element.getAttribute(DATA_BOT_ID) || "",
+                renderHTML: (attributes: Record<string, unknown>): Record<string, string> => ({
+                    [DATA_BOT_ID]: attributes["botId"] as string,
+                }),
+            },
+            botName: {
+                default: "",
+                parseHTML: (element: HTMLElement): string =>
+                    element.getAttribute(DATA_BOT_NAME) || "",
+                renderHTML: (attributes: Record<string, unknown>): Record<string, string> => ({
+                    [DATA_BOT_NAME]: attributes["botName"] as string,
                 }),
             },
         };
