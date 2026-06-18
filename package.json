@@ -29,12 +29,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gyash1512/blocknote-layout.git"
+    "url": "git+https://github.com/xynehq/blocknote-layout.git"
   },
   "bugs": {
-    "url": "https://github.com/gyash1512/blocknote-layout/issues"
+    "url": "https://github.com/xynehq/blocknote-layout/issues"
   },
-  "homepage": "https://github.com/gyash1512/blocknote-layout#readme",
+  "homepage": "https://github.com/xynehq/blocknote-layout#readme",
   "type": "module",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
