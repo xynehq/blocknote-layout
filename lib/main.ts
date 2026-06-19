@@ -102,6 +102,15 @@ export {
     insertGroupMention,
 } from "./mentions/main.js";
 
+// Canvas comments exports
+export {
+    CanvasCommentButton,
+} from "./canvas-comments/main.js";
+
+export type {
+    CanvasCommentButtonProps,
+} from "./canvas-comments/main.js";
+
 // Common utilities exports
 export {
     asBlockNoteEditorForView,
