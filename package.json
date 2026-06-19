@@ -66,6 +66,14 @@
     "./genius": {
       "types": "./dist/genius/main.d.ts",
       "import": "./dist/genius/main.js"
+    },
+    "./mentions": {
+      "types": "./dist/mentions/main.d.ts",
+      "import": "./dist/mentions/main.js"
+    },
+    "./mentions/server": {
+      "types": "./dist/mentions/server.d.ts",
+      "import": "./dist/mentions/server.js"
     }
   },
   "files": [

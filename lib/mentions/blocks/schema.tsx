@@ -1,52 +1,16 @@
 import { createReactInlineContentSpec } from "@blocknote/react";
 import { InlineContentSchema, StyleSchema } from "@blocknote/core";
+import { mentionConfig, getMentionDisplayName, MentionProps } from "./config.js";
 
-/**
- * Props for mention inline content (user or group)
- */
-export interface MentionProps {
-    userId: string;
-    username: string;
-    userEmail: string;
-    userPicture: string;
-    /** When set, this mention is a group mention; backend expands to member user IDs */
-    groupId?: string;
-    groupName?: string;
-}
+export type { MentionProps } from "./config.js";
+export { mentionConfig, getMentionDisplayName } from "./config.js";
 
-/**
- * Mention inline content spec
- * Renders as @username or @groupName (for group mentions)
- */
 export const mentionInlineContentSpec = createReactInlineContentSpec(
-    {
-        type: "mention",
-        propSchema: {
-            userId: {
-                default: "",
-            },
-            username: {
-                default: "",
-            },
-            userEmail: {
-                default: "",
-            },
-            userPicture: {
-                default: "",
-            },
-            groupId: {
-                default: "",
-            },
-            groupName: {
-                default: "",
-            },
-        },
-        content: "none",
-    },
+    mentionConfig,
     {
         render: (props) => {
             const p = props.inlineContent.props as MentionProps;
-            const displayName = (p.groupId && p.groupName) ? p.groupName : (p.username || "");
+            const displayName = getMentionDisplayName(p);
             return (
                 <span
                     style={{
