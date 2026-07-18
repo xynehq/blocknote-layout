@@ -22,6 +22,7 @@ This is a pnpm workspace — every block is its own npm package:
 blocknote-layout/
 ├── packages/
 │   ├── blocknote-layout/ # Umbrella package re-exporting all blocks
+│   ├── extensions/       # Whiteboard + slideshow + mentions bundle
 │   ├── core/             # Shared utilities (blocknote-layout-core)
 │   ├── coderunner/       # Code runner block
 │   ├── genius/           # Genius AI block

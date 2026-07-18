@@ -157,6 +157,25 @@ importers:
         specifier: ^2.0.0
         version: 2.2.2(vite@5.4.21(@types/node@24.13.3)(sass@1.51.0))
 
+  packages/extensions:
+    dependencies:
+      blocknote-layout-core:
+        specifier: workspace:^
+        version: link:../core
+      blocknote-layout-mentions:
+        specifier: workspace:^
+        version: link:../mentions
+      blocknote-layout-slideshow:
+        specifier: workspace:^
+        version: link:../slideshow
+      blocknote-layout-whiteboard:
+        specifier: workspace:^
+        version: link:../whiteboard
+    devDependencies:
+      typescript:
+        specifier: ^5.2.2
+        version: 5.9.3
+
   packages/genius:
     dependencies:
       blocknote-layout-core:

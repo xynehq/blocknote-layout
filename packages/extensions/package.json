@@ -1,0 +1,70 @@
+{
+  "name": "blocknote-layout-extensions",
+  "description": "Whiteboard, slideshow, and mentions extensions for BlockNote editor",
+  "keywords": [
+    "blocknote",
+    "editor",
+    "whiteboard",
+    "slideshow",
+    "presentation",
+    "mentions",
+    "react"
+  ],
+  "version": "4.0.0",
+  "license": "MIT",
+  "author": "Yash Gupta",
+  "contributors": [
+    "Yash Gupta <https://github.com/gyash1512>",
+    "Harshpreet Singh <https://github.com/harshpreet931>",
+    "Satvik Batra <https://github.com/satvikbatra>"
+  ],
+  "homepage": "https://github.com/xynehq/blocknote-layout#readme",
+  "bugs": {
+    "url": "https://github.com/xynehq/blocknote-layout/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xynehq/blocknote-layout.git",
+    "directory": "packages/extensions"
+  },
+  "type": "module",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js"
+    },
+    "./whiteboard": {
+      "types": "./dist/whiteboard.d.ts",
+      "import": "./dist/whiteboard.js"
+    },
+    "./slideshow": {
+      "types": "./dist/slideshow.d.ts",
+      "import": "./dist/slideshow.js"
+    },
+    "./mentions": {
+      "types": "./dist/mentions.d.ts",
+      "import": "./dist/mentions.js"
+    },
+    "./mentions/server": {
+      "types": "./dist/mentions-server.d.ts",
+      "import": "./dist/mentions-server.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig-build.json"
+  },
+  "dependencies": {
+    "blocknote-layout-core": "workspace:^",
+    "blocknote-layout-mentions": "workspace:^",
+    "blocknote-layout-slideshow": "workspace:^",
+    "blocknote-layout-whiteboard": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}

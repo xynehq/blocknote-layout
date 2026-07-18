@@ -46,6 +46,7 @@ pnpm add blocknote-layout
 | Package | Contents |
 |---------|----------|
 | [`blocknote-layout`](./packages/blocknote-layout) | Umbrella — re-exports all blocks |
+| [`blocknote-layout-extensions`](./packages/extensions) | Whiteboard + slideshow + mentions in one package |
 | [`blocknote-layout-coderunner`](./packages/coderunner) | Code runner block |
 | [`blocknote-layout-slideshow`](./packages/slideshow) | Slideshow presentations |
 | [`blocknote-layout-whiteboard`](./packages/whiteboard) | Whiteboard block |
