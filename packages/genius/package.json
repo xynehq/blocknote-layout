@@ -7,7 +7,7 @@
     "ai",
     "react"
   ],
-  "version": "3.1.1",
+  "version": "3.2.0",
   "license": "MIT",
   "author": "Yash Gupta",
   "contributors": [
@@ -55,7 +55,8 @@
     "react-icons": "^4.0.0 || ^5.0.0"
   },
   "dependencies": {
-    "blocknote-layout-core": "workspace:^"
+    "blocknote-layout-core": "workspace:^",
+    "blocknote-layout-server-utils": "workspace:^"
   },
   "devDependencies": {
     "typescript": "^5.2.2",

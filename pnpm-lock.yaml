@@ -22,6 +22,9 @@ importers:
       blocknote-layout-mentions:
         specifier: workspace:^
         version: link:../mentions
+      blocknote-layout-server-utils:
+        specifier: workspace:^
+        version: link:../server
       blocknote-layout-slideshow:
         specifier: workspace:^
         version: link:../slideshow
@@ -59,6 +62,9 @@ importers:
       '@codemirror/state':
         specifier: ^6.5.2
         version: 6.7.1
+      blocknote-layout-server-utils:
+        specifier: workspace:^
+        version: link:../server
     devDependencies:
       '@blocknote/core':
         specifier: 0.51.4
@@ -156,6 +162,9 @@ importers:
       blocknote-layout-core:
         specifier: workspace:^
         version: link:../core
+      blocknote-layout-server-utils:
+        specifier: workspace:^
+        version: link:../server
     devDependencies:
       '@blocknote/core':
         specifier: 0.51.4
@@ -251,6 +260,19 @@ importers:
         specifier: ^2.0.0
         version: 2.2.2(vite@5.4.21(@types/node@24.13.3)(sass@1.51.0))
 
+  packages/server:
+    dependencies:
+      blocknote-layout-mentions:
+        specifier: workspace:^
+        version: link:../mentions
+    devDependencies:
+      '@blocknote/core':
+        specifier: 0.51.4
+        version: 0.51.4(@lezer/common@1.5.2)(@lezer/highlight@1.2.3)(@types/hast@3.0.5)
+      typescript:
+        specifier: ^5.2.2
+        version: 5.9.3
+
   packages/slideshow:
     dependencies:
       '@excalidraw/excalidraw':
@@ -317,6 +339,9 @@ importers:
       blocknote-layout-core:
         specifier: workspace:^
         version: link:../core
+      blocknote-layout-server-utils:
+        specifier: workspace:^
+        version: link:../server
     devDependencies:
       '@blocknote/core':
         specifier: 0.51.4

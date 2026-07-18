@@ -16,7 +16,7 @@
     "diagram",
     "react"
   ],
-  "version": "3.1.1",
+  "version": "3.2.0",
   "license": "MIT",
   "author": "Yash Gupta",
   "contributors": [
@@ -76,6 +76,10 @@
     "./coderunner/server": {
       "types": "./dist/coderunner-server.d.ts",
       "import": "./dist/coderunner-server.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
     }
   },
   "files": [
@@ -90,7 +94,8 @@
     "blocknote-layout-genius": "workspace:^",
     "blocknote-layout-mentions": "workspace:^",
     "blocknote-layout-slideshow": "workspace:^",
-    "blocknote-layout-whiteboard": "workspace:^"
+    "blocknote-layout-whiteboard": "workspace:^",
+    "blocknote-layout-server-utils": "workspace:^"
   },
   "devDependencies": {
     "typescript": "^5.2.2"
