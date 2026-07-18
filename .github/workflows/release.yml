@@ -16,27 +16,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-
-      - name: Upgrade npm for Trusted Publishing (OIDC)
-        run: npm install -g npm@latest
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Verify version match
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ Version mismatch! Tag: $TAG_VERSION, package.json: $PKG_VERSION"
-            exit 1
-          fi
-          echo "✅ Version verified: $PKG_VERSION"
+          for pkg in packages/*/package.json; do
+            PKG_VERSION=$(node -p "require('./$pkg').version")
+            if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+              echo "❌ Version mismatch! Tag: $TAG_VERSION, $pkg: $PKG_VERSION"
+              exit 1
+            fi
+          done
+          echo "✅ All package versions match $TAG_VERSION"
+
+      - name: Build all packages
+        run: pnpm -r build
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: pnpm publish -r --access public --no-git-checks

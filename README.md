@@ -21,18 +21,37 @@
 
 | Module | Description |
 |--------|-------------|
-| **Code Runner** | Execute code in-browser with multi-language support (Python via Pyodide, others via Judge0) and syntax highlighting |
+| **Code Runner** | Execute code in-browser with multi-language support (via Judge0 or custom handlers) and syntax highlighting |
 | **Slideshow** | Create and present slides with Reveal.js integration and theme support |
 | **Whiteboard** | Freeform drawing and diagramming canvas powered by Excalidraw |
+| **Genius** | AI assistant block with configurable node views |
 | **Mentions** | @mention support for users and groups with autocomplete suggestions |
 
 ---
 
 ## Installation
 
+Every block ships as its own package — install only what you need:
+
 ```bash
-npm install blocknote-layout
+pnpm add blocknote-layout-slideshow
 ```
+
+Or install the umbrella package, which re-exports every block:
+
+```bash
+pnpm add blocknote-layout
+```
+
+| Package | Contents |
+|---------|----------|
+| [`blocknote-layout`](./packages/blocknote-layout) | Umbrella — re-exports all blocks |
+| [`blocknote-layout-coderunner`](./packages/coderunner) | Code runner block |
+| [`blocknote-layout-slideshow`](./packages/slideshow) | Slideshow presentations |
+| [`blocknote-layout-whiteboard`](./packages/whiteboard) | Whiteboard block |
+| [`blocknote-layout-genius`](./packages/genius) | Genius AI block |
+| [`blocknote-layout-mentions`](./packages/mentions) | Mention inline content (+ React-free server entry) |
+| [`blocknote-layout-core`](./packages/core) | Shared utilities |
 
 ---
 
@@ -40,19 +59,17 @@ npm install blocknote-layout
 
 ### Code Runner
 
-Execute code directly in the browser. Supports Python (via Pyodide/WebAssembly), JavaScript, Java, Go, C++, Rust, PHP, and more (via Judge0).
+Execute code directly in the browser. Supports Python, JavaScript, Java, Go, C++, Rust, PHP, and more (via Judge0 or custom handlers).
 
 ```ts
 import { CodeBlock, insertCode, setCodeRunnerConfig } from "blocknote-layout";
-// or: import { CodeBlock } from "blocknote-layout/coderunner";
+// or standalone: import { CodeBlock } from "blocknote-layout-coderunner";
 ```
 
 **Key exports:** `CodeBlock`, `insertCode`, `insertPythonCode`, `insertJavaScriptCode`, `executeCode`, `setCodeRunnerConfig`, `getCodeRunnerConfig`, `LANGUAGES`, `getSupportedLanguages`
 
 **Highlights:**
 - Syntax highlighting via CodeMirror
-- Auto-detects and installs Python packages (pandas, numpy, scipy, matplotlib)
-- Matplotlib plots rendered as images in the output
 - Configurable execution backend
 
 ---
@@ -63,7 +80,7 @@ Convert document content into presentation slides with Reveal.js.
 
 ```ts
 import { usePresentation, PresentToolbar, PRESENTATION_THEMES } from "blocknote-layout";
-// or: import { usePresentation } from "blocknote-layout/slideshow";
+// or standalone: import { usePresentation } from "blocknote-layout-slideshow";
 ```
 
 **Key exports:** `usePresentation`, `PresentationModal`, `PresentToolbar`, `generateSlidesFromBlocks`, `PRESENTATION_THEMES`
@@ -81,7 +98,7 @@ Freeform drawing and diagramming canvas.
 
 ```ts
 import { withWhiteboard, getWhiteboardSlashMenuItems } from "blocknote-layout";
-// or: import { withWhiteboard } from "blocknote-layout/whiteboard";
+// or standalone: import { withWhiteboard } from "blocknote-layout-whiteboard";
 ```
 
 **Key exports:** `withWhiteboard`, `createWhiteboardSchema`, `WhiteboardBlock`, `getWhiteboardSlashMenuItems`, `insertWhiteboard`, `WhiteboardNodeView`
@@ -105,15 +122,17 @@ import { withMentions, getMentionSuggestionMenuItems } from "blocknote-layout";
 
 ---
 
-## Subpath Imports
+## Selective Installs
 
-Each module can be imported individually for tree-shaking:
+Every block is a standalone package — depend on it directly and skip the rest (and their dependencies):
 
 ```ts
-import { CodeBlock } from "blocknote-layout/coderunner";
-import { usePresentation } from "blocknote-layout/slideshow";
-import { withWhiteboard } from "blocknote-layout/whiteboard";
+import { CodeBlock } from "blocknote-layout-coderunner";
+import { usePresentation } from "blocknote-layout-slideshow";
+import { withWhiteboard } from "blocknote-layout-whiteboard";
 ```
+
+If you use the umbrella package, its subpath imports (`blocknote-layout/coderunner`, `blocknote-layout/slideshow`, …) keep working.
 
 ---
 
@@ -121,9 +140,9 @@ import { withWhiteboard } from "blocknote-layout/whiteboard";
 
 | Package | Version |
 |---------|---------|
-| `@blocknote/core` | `0.47.1` |
-| `@blocknote/mantine` | `0.47.1` |
-| `@blocknote/react` | `0.47.1` |
+| `@blocknote/core` | `0.51.4` |
+| `@blocknote/mantine` | `0.51.4` |
+| `@blocknote/react` | `0.51.4` |
 | `@tiptap/core` | `^3.0.0` |
 | `@uiw/react-codemirror` | `^4.21.0` |
 | `react` | `^18.0.0 \|\| ^19.0.0` |

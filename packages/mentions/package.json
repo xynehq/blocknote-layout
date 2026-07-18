@@ -1,0 +1,71 @@
+{
+  "name": "blocknote-layout-mentions",
+  "description": "Mention inline content for BlockNote, with a React-free server entry",
+  "keywords": [
+    "blocknote",
+    "editor",
+    "mentions",
+    "react"
+  ],
+  "version": "3.0.0",
+  "license": "MIT",
+  "author": "Yash Gupta",
+  "contributors": [
+    "Yash Gupta <https://github.com/gyash1512>",
+    "Harshpreet Singh <https://github.com/harshpreet931>",
+    "Satvik Batra <https://github.com/satvikbatra>"
+  ],
+  "homepage": "https://github.com/xynehq/blocknote-layout#readme",
+  "bugs": {
+    "url": "https://github.com/xynehq/blocknote-layout/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xynehq/blocknote-layout.git",
+    "directory": "packages/mentions"
+  },
+  "type": "module",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig-build.json && vite build"
+  },
+  "peerDependencies": {
+    "@blocknote/core": "0.51.4",
+    "@blocknote/react": "0.51.4",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-icons": "^4.0.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.1.7",
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite-plugin-dts": "^3.7.3",
+    "vite-plugin-lib-inject-css": "^2.0.0",
+    "glob": "^10.3.10",
+    "@types/node": "^24.3.1",
+    "@types/react": "^19.1.1",
+    "@types/react-dom": "^19.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.4.0",
+    "@blocknote/core": "0.51.4",
+    "@blocknote/react": "0.51.4"
+  }
+}

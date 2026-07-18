@@ -5,30 +5,35 @@ Thank you for your interest in contributing! 🎉
 ## 📋 Getting Started
 
 1. **Fork the repository** and clone your fork
-2. **Install dependencies**:
+2. **Install dependencies** (pnpm workspace):
    ```bash
-   npm install
+   pnpm install
    ```
-3. **Start development server**:
+3. **Build all packages**:
    ```bash
-   npm run dev
+   pnpm -r build
    ```
 
 ## 🏗️ Project Structure
 
+This is a pnpm workspace — every block is its own npm package:
+
 ```
 blocknote-layout/
-├── lib/
-│   ├── main.ts           # Unified exports
-│   └── coderunner/       # Python code runner plugin
-│       ├── main.ts
-│       ├── CodeBlock.tsx
-│       └── pyodide.ts
+├── packages/
+│   ├── blocknote-layout/ # Umbrella package re-exporting all blocks
+│   ├── core/             # Shared utilities (blocknote-layout-core)
+│   ├── coderunner/       # Code runner block
+│   ├── genius/           # Genius AI block
+│   ├── mentions/         # Mention inline content
+│   ├── slideshow/        # Slideshow presentations
+│   └── whiteboard/       # Whiteboard block
 ├── .github/workflows/    # CI/CD pipelines
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
+├── pnpm-workspace.yaml
+└── package.json
 ```
+
+Each package under `packages/` has its own `lib/` sources, `vite.config.ts`, and `package.json`.
 
 ## 🔧 Development Workflow
 
@@ -39,11 +44,11 @@ blocknote-layout/
    git checkout -b feature/my-awesome-feature
    ```
 
-2. Make your changes in `lib/`
+2. Make your changes in the relevant `packages/<block>/lib/`
 
 3. Build to check for errors:
    ```bash
-   npm run build
+   pnpm -r build
    ```
 
 4. Commit your changes with a clear message:
@@ -67,25 +72,25 @@ Releases are handled automatically via GitHub Actions when a version tag is push
 
 ### To release:
 
-1. Update the version in `package.json`:
-   ```json
-   {
-     "version": "1.1.0"
-   }
+Versions are kept in lockstep — every package under `packages/` shares the same version.
+
+1. Update the version in every `packages/*/package.json`:
+   ```bash
+   pnpm -r exec npm version 3.1.0 --no-git-tag-version
    ```
 
 2. Commit the version bump:
    ```bash
-   git commit -m "chore: bump version to 1.1.0"
+   git commit -am "chore: bump version to 3.1.0"
    ```
 
 3. Create and push a tag:
    ```bash
-   git tag v1.1.0
+   git tag v3.1.0
    git push origin main --tags
    ```
 
-4. The GitHub Action will automatically build and publish to npm.
+4. The GitHub Action will automatically build and publish all packages to npm.
 
 ## 📝 Pull Request Process
 
@@ -99,7 +104,7 @@ Releases are handled automatically via GitHub Actions when a version tag is push
 
 Please use GitHub Issues to report bugs or request features. Include:
 
-- Which feature (coderunner)
+- Which package (e.g. `blocknote-layout-coderunner`)
 - Version number
 - Steps to reproduce
 - Expected vs actual behavior
