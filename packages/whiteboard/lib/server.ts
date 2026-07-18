@@ -40,7 +40,7 @@ export const whiteboardServerSpec = createBlockSpec(
             return { dom };
         },
     },
-);
+)();
 
 export type WhiteboardServerBlockSchema = {
     whiteboard: typeof whiteboardServerSpec;

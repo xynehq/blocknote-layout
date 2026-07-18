@@ -49,7 +49,7 @@ export const geniusServerSpec = createBlockSpec(
             return { dom };
         },
     },
-);
+)();
 
 export type GeniusServerBlockSchema = {
     genius: typeof geniusServerSpec;

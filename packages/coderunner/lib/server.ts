@@ -45,7 +45,7 @@ export const codeRunnerServerSpec = createBlockSpec(
             return { dom };
         },
     },
-);
+)();
 
 export type CodeRunnerServerBlockSchema = {
     codeRunner: typeof codeRunnerServerSpec;
