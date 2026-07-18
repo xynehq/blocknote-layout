@@ -10,7 +10,7 @@
     "excalidraw",
     "react"
   ],
-  "version": "3.0.0",
+  "version": "3.1.0",
   "license": "MIT",
   "author": "Yash Gupta",
   "contributors": [
@@ -34,6 +34,10 @@
     ".": {
       "types": "./dist/main.d.ts",
       "import": "./dist/main.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
     }
   },
   "files": [

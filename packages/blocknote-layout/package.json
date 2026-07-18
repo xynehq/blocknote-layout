@@ -16,7 +16,7 @@
     "diagram",
     "react"
   ],
-  "version": "3.0.0",
+  "version": "3.1.0",
   "license": "MIT",
   "author": "Yash Gupta",
   "contributors": [
@@ -64,6 +64,18 @@
     "./mentions/server": {
       "types": "./dist/mentions-server.d.ts",
       "import": "./dist/mentions-server.js"
+    },
+    "./whiteboard/server": {
+      "types": "./dist/whiteboard-server.d.ts",
+      "import": "./dist/whiteboard-server.js"
+    },
+    "./genius/server": {
+      "types": "./dist/genius-server.d.ts",
+      "import": "./dist/genius-server.js"
+    },
+    "./coderunner/server": {
+      "types": "./dist/coderunner-server.d.ts",
+      "import": "./dist/coderunner-server.js"
     }
   },
   "files": [
